@@ -1,10 +1,42 @@
 {
   "name": "iobroker.telegrammenu2",
   "version": "0.1.0",
-  "description": "Self-contained Telegram menu adapter for ioBroker",
-  "main": "main.js",
+  "description": "Self-contained Telegram menu adapter for ioBroker with a visual, no-code node editor",
+  "author": {
+    "name": "backfisch88",
+    "url": "https://github.com/backfisch88"
+  },
   "license": "MIT",
+  "homepage": "https://github.com/backfisch88/ioBroker.telegrammenu2",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/backfisch88/ioBroker.telegrammenu2.git"
+  },
+  "bugs": {
+    "url": "https://github.com/backfisch88/ioBroker.telegrammenu2/issues"
+  },
+  "main": "main.js",
+  "files": [
+    "admin/",
+    "core/",
+    "modules/",
+    "io-package.json",
+    "main.js",
+    "registryExample.json",
+    "README.md",
+    "LICENSE"
+  ],
   "dependencies": {
     "@iobroker/adapter-core": "^3.1.0"
-  }
+  },
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "keywords": [
+    "ioBroker",
+    "telegram",
+    "menu",
+    "notify",
+    "bot"
+  ]
 }
