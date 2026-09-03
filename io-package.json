@@ -17,13 +17,20 @@
     "materialize": false,
     "connectionType": "local",
     "dataSource": "push",
+    "tier": 3,
     "icon": "telegrammenu2.png",
     "loglevel": "info",
-    "extIcon": "",
+    "extIcon": "https://raw.githubusercontent.com/backfisch88/ioBroker.telegrammenu2/main/admin/telegrammenu2.png",
+    "readme": "https://github.com/backfisch88/ioBroker.telegrammenu2/blob/main/README.md",
     "keywords": ["telegram", "menu", "notify"],
     "license": "MIT",
+    "licenseInformation": {
+      "type": "free",
+      "license": "MIT"
+    },
     "main": "main.js",
     "dependencies": [{ "js-controller": ">=5.0.0" }],
+    "globalDependencies": [{ "admin": ">=6.0.0" }],
     "adminUI": {
       "config": "json",
       "tab": "html"
