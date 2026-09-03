@@ -18,11 +18,70 @@ Building a Telegram bot for your smart home usually means writing (and maintaini
 - **Auto-generated menus** — user management, notification preferences, and notification pausing are built in and update themselves automatically; no manual button wiring needed
 - **Percent-step / number-range pickers** — pick a value from an inline keyboard (with the current value marked ✅) or tap "custom value" to enter one via a real numeric keypad, including decimals
 - **Message templates** — `{{datapoint.id}}` placeholders resolve to live values anywhere in a button's text or confirmation message, including inline math (`{{datapoint.id / 60}}`) and automatic boolean/date formatting
-- **Status-dependent icons** — a menu or button's emoji can change based on a datapoint's current value/rules
-- **Permission system** — per-button/per-menu permissions, a user approval gate for new Telegram users, and an admin menu to manage roles and rights
+- **Status-dependent icons** — a menu or button's emoji can change based on a datapoint's current value/rules, including comparison operators (see below)
+- **Permission system** — per-button/per-menu permissions, a user approval gate for new Telegram users, and an admin menu to manage roles and rights (see "Users & Permissions" below)
 - **Notification engine** — `notify(area, type, text)` with per-area/per-type user preferences, grouping of rapid-fire notifications, snooze/pause per area, and optional HTML formatting or link-preview suppression
 - **Event listeners** — watch any datapoint and automatically push an interactive menu to every authorized user when a condition matches (value, comparison operator, optional `ack` check)
 - **Script bridge** — any `javascript.0` script can register an `onMessage` handler and return `{ text, html, noPreview, menuKey, awaitReply }` to answer a button press, ask a follow-up question, or jump to another menu
+
+## Global settings
+
+A handful of settings apply adapter-wide and live as plain fields on the **`main`** menu (the one with `menuKey: "main"`) — set them via the "⚙️ Global Settings" section on that node in the editor:
+
+| Field | Default | Effect |
+|---|---|---|
+| `buttonsPerRow` | `2` | How many buttons per row for auto-wrapped keyboards (regular menus and auto-menus like the user list) |
+| `groupingEnabled` | `true` | Whether rapid-fire notifications of the same type get bundled into one message |
+| `groupableExcludeTypes` | `['warn', 'error']` | Notification types that are always sent immediately, never bundled |
+| `boolTranslateEnabled` | `true` | Whether `true`/`false` values resolved via `{{datapoint.id}}` get translated |
+| `boolTrueText` / `boolFalseText` | `✅ an` / `⛔ aus` | The translated text for `true`/`false` |
+| `dateTranslateEnabled` | `true` | Whether ISO date/time values resolved via `{{datapoint.id}}` get reformatted |
+| `dateFormat` / `dateTimeFormat` | `DD.MM.YYYY` / `DD.MM.YYYY HH:mm` | The output format for date-only vs. date+time values |
+
+## Users & Permissions
+
+Every Telegram user who messages the bot is auto-registered on first contact with role `guest` and `approved: false` — they see a "waiting for approval" message and nothing else until an admin approves them (via an inline button that appears automatically in the admins' chat). Once approved, permissions are per-user boolean flags (`users.<key>.permissions.<name>`), checked against whatever string you put in a menu's or button's `perm` field:
+
+```javascript
+{ text: '🔥 Heating', cmd: 'TG:NAV:HEATING', nextMenu: 'heating_main', perm: 'heating' }
+```
+
+A user only sees/can use this if `users.<theirKey>.permissions.heating` is `true`. The special value `perm: 'admin'` instead checks the user's `role` field directly (`users.<key>.role === 'admin'`) rather than a named permission. Admins get a built-in "👤 Users" auto-menu (`source: 'users'`) to toggle any user's individual permissions and role without touching states by hand.
+
+## Advanced examples
+
+**Custom confirmation text** on a percent-step/number-range menu (`confirmMessage` field, separate from the menu's normal opening text) — `{value}` and `{unit}` are substituted with whatever was just set:
+
+```
+🌡️ Target temperature set to {value}{unit}.
+```
+
+**Sending a notification with HTML formatting and no link preview:**
+
+```javascript
+sendTo('telegrammenu2.0', 'notify', {
+  area: 'Heating',
+  type: 'info',
+  text: '<b>Boiler restarted</b>\nSee https://your-dashboard.example for details.',
+  extra: 'html,nopreview',
+});
+```
+
+**Auto-opening a menu when a datapoint crosses a threshold** (`trigger` field on any menu):
+
+```javascript
+trigger: { datapoint: '0_userdata.0.Heating.error', value: 'true', ackOnly: true }
+```
+
+Pushes that menu to every user with permission for it, the moment the datapoint reports `true` with `ack: true`. `value` supports comparison operators too (`>25`, `<=10`, etc.) — used the same way for status-dependent icons:
+
+```javascript
+icon: {
+  datapoint: '0_userdata.0.Car.batterySoc',
+  rules: [{ value: '<25', emoji: '⚡️' }],
+  fallback: '🚗',
+}
+```
 
 ## How it works
 
