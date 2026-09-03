@@ -1,6 +1,6 @@
 {
   "name": "iobroker.telegrammenu2",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Self-contained Telegram menu adapter for ioBroker with a visual, no-code node editor",
   "author": {
     "name": "backfisch88",

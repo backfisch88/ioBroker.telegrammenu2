@@ -1,7 +1,7 @@
 {
   "common": {
     "name": "telegrammenu2",
-    "version": "0.1.0",
+    "version": "0.2.0",
     "title": "Telegram Menu 2",
     "messagebox": true,
     "titleLang": { "en": "Telegram Menu 2", "de": "Telegram Menü 2" },
