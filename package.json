@@ -1,0 +1,10 @@
+{
+  "name": "iobroker.telegrammenu2",
+  "version": "0.1.0",
+  "description": "Self-contained Telegram menu adapter for ioBroker",
+  "main": "main.js",
+  "license": "MIT",
+  "dependencies": {
+    "@iobroker/adapter-core": "^3.1.0"
+  }
+}

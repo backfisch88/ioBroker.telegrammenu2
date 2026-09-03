@@ -1,0 +1,73 @@
+{
+  "main": {
+    "title": "🏠 Main Menu",
+    "rows": [
+      [
+        {
+          "text": "🌤️ Weather",
+          "cmd": "TG:WEATHER:SHOW",
+          "perm": "weather",
+          "message": "🌤️ Current Weather\n\nTemperature: {{0_userdata.0.Weather.temperature}}°C\nHumidity: {{0_userdata.0.Weather.humidity}}%"
+        },
+        {
+          "text": "🤖 Vacuum",
+          "cmd": "TG:NAV:VACUUM",
+          "nextMenu": "vacuum_main",
+          "perm": "vacuum",
+          "icon": {
+            "datapoint": "0_userdata.0.Vacuum.status",
+            "rules": [
+              { "value": "error", "emoji": "🚨" },
+              { "value": "lowBattery", "emoji": "🔋" },
+              { "value": "cleaning", "emoji": "🧹" }
+            ],
+            "fallback": "🤖"
+          }
+        }
+      ],
+      [{ "text": "👤 Users", "cmd": "TG:NAV:ADMIN", "nextMenu": "admin_main", "perm": "admin" }]
+    ]
+  },
+
+  "vacuum_main": {
+    "title": "🤖 Vacuum Menu",
+    "parent": "main",
+    "rows": [
+      [
+        { "text": "▶️ Start", "cmd": "TG:VACUUM:START", "perm": "vacuumControl" },
+        { "text": "⏸️ Pause", "cmd": "TG:VACUUM:PAUSE", "perm": "vacuumControl" }
+      ],
+      [{ "text": "📊 Status", "cmd": "TG:VACUUM:STATUS", "perm": "vacuum" }],
+      [
+        { "text": "⬅️ Back", "cmd": "TG:NAV:BACK" },
+        { "text": "🏠 Main Menu", "cmd": "TG:NAV:MAIN" }
+      ]
+    ]
+  },
+
+  "admin_main": {
+    "title": "👤 Users",
+    "parent": "main",
+    "perm": "admin",
+    "source": "users"
+  },
+
+  "settings_main": {
+    "title": "⚙️ Settings",
+    "parent": "main",
+    "perm": "settings",
+    "rows": [
+      [{ "text": "🔔 Notifications", "cmd": "TG:NAV:SETTINGS:NOTIFY", "nextMenu": "settings_notify", "perm": "settings" }],
+      [
+        { "text": "⬅️ Back", "cmd": "TG:NAV:BACK" },
+        { "text": "🏠 Main Menu", "cmd": "TG:NAV:MAIN" }
+      ]
+    ]
+  },
+
+  "settings_notify": {
+    "title": "🔔 Notifications",
+    "parent": "settings_main",
+    "source": "notifyPrefs"
+  }
+}

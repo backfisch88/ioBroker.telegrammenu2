@@ -1,0 +1,32 @@
+{
+  "i18n": false,
+  "type": "panel",
+  "items": {
+    "telegramInstance": {
+      "type": "instance",
+      "adapter": "telegram",
+      "label": "Telegram-Instanz",
+      "help": "Die telegram.0-Instanz, über die telegrammenu2 sendet/empfängt (communicate.request).",
+      "sm": 12
+    },
+    "javascriptInstance": {
+      "type": "instance",
+      "adapter": "javascript",
+      "label": "JavaScript-Instanz (für Skript-Bridge)",
+      "help": "Instanz, unter der deine Telegram-Skripte laufen (für die Skript-Bridge / onMessage-Aufrufe).",
+      "sm": 12
+    },
+    "scriptFolder": {
+      "type": "text",
+      "label": "Skript-Ordner (für kurze Skript-Namen)",
+      "help": "Trägst du im Editor-Tab nur einen kurzen Namen ein (z. B. \"meinSkript\" statt \"script.js.Telegram.meinSkript\"), wird dieser Ordner automatisch vorangestellt.",
+      "default": "Telegram",
+      "sm": 12
+    },
+    "_note": {
+      "type": "staticText",
+      "text": "Menü-Import läuft aktuell noch per sendTo('telegrammenu2.0', 'importRegistry', <JSON>) – ein Import-Button hier folgt später.",
+      "sm": 12
+    }
+  }
+}

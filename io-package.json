@@ -1,0 +1,44 @@
+{
+  "common": {
+    "name": "telegrammenu2",
+    "version": "0.1.0",
+    "title": "Telegram Menu 2",
+    "messagebox": true,
+    "titleLang": { "en": "Telegram Menu 2", "de": "Telegram Menü 2" },
+    "desc": {
+      "en": "Self-contained Telegram menu system: router, notify engine, user rights and pluggable domain modules.",
+      "de": "Eigenständiges Telegram-Menüsystem: Router, Notify-Engine, Rechteverwaltung und erweiterbare Fachmodule."
+    },
+    "authors": ["Henrik"],
+    "platform": "Javascript/Node.js",
+    "mode": "daemon",
+    "type": "communication",
+    "compact": true,
+    "materialize": false,
+    "connectionType": "local",
+    "dataSource": "push",
+    "icon": "telegrammenu2.png",
+    "loglevel": "info",
+    "extIcon": "",
+    "keywords": ["telegram", "menu", "notify"],
+    "license": "MIT",
+    "main": "main.js",
+    "dependencies": [{ "js-controller": ">=5.0.0" }],
+    "adminUI": {
+      "config": "json",
+      "tab": "html"
+    },
+    "adminTab": {
+      "name": { "en": "Menu Editor", "de": "Menü-Editor" },
+      "singleton": true,
+      "link": "adapter/telegrammenu2/tab.html"
+    }
+  },
+  "native": {
+    "telegramInstance": "telegram.0",
+    "javascriptInstance": "javascript.0",
+    "scriptFolder": "Telegram"
+  },
+  "objects": [],
+  "instanceObjects": []
+}
