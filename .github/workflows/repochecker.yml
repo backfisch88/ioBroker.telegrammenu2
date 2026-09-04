@@ -1,0 +1,23 @@
+name: ioBroker Repository Checker
+
+# Runs the official ioBroker adapter checker (used before submission to the
+# ioBroker.repositories "latest" list) against this repo. Has real GitHub
+# API access here (unlike running it locally without a token), so this is
+# the authoritative result - check the Actions tab after each push.
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+      - name: Run ioBroker repository checker
+        run: npx --yes @iobroker/repochecker https://github.com/${{ github.repository }} ${{ github.ref_name }}

@@ -80,7 +80,7 @@ async function handleAdminCommand(adapter, cmd, requestUser, requestUserKey, ren
     const permId = `users.${targetUserKey}.permissions.${perm}`;
     const permState = await adapter.getStateAsync(permId);
     const currentlyOn = permState?.val === true || permState?.val === 'true';
-    await ensureDynamicState(adapter, permId, false, 'boolean');
+    await ensureDynamicState(adapter, permId, false, 'indicator');
     await adapter.setStateAsync(permId, { val: !currentlyOn, ack: true });
   }
   // parts.length === 1 -> nur Detailansicht öffnen, nichts togglen

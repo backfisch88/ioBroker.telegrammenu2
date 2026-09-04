@@ -42,7 +42,7 @@ async function handleNotifyToggle(adapter, cmd, requestUser, requestUserKey, ren
     const newVal = !allEnabled;
     for (const { area, type } of pairs) {
       const id = `users.${requestUserKey}.notify.${area}.${type}`;
-      await ensureDynamicState(adapter, id, true, 'boolean');
+      await ensureDynamicState(adapter, id, true, 'indicator');
       await adapter.setStateAsync(id, { val: newVal, ack: true });
     }
     await renderMenuFn(requestUser, 'settings_notify');
@@ -59,7 +59,7 @@ async function handleNotifyToggle(adapter, cmd, requestUser, requestUserKey, ren
   const id = `users.${requestUserKey}.notify.${area}.${type}`;
   const state = await adapter.getStateAsync(id);
   const currentlyOn = state ? (state.val === true || state.val === 'true') : true; // Default: an, wie in autoMenus.js
-  await ensureDynamicState(adapter, id, true, 'boolean');
+  await ensureDynamicState(adapter, id, true, 'indicator');
   await adapter.setStateAsync(id, { val: !currentlyOn, ack: true });
 
   // settings_notify ist ein Auto-Menü (source: notifyPrefs) – rows werden bei
