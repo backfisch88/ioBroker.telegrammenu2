@@ -133,6 +133,43 @@ node test/smoke.js
 
 Runs the full router/notify/permission/registry flow against a simulated adapter — no real ioBroker installation required.
 
+## Changelog
+
+### 0.2.0
+
+- Added percent-step/number-range value pickers (inline keyboard with the current value marked, plus a numeric-keypad "custom value" option supporting decimals)
+- Added event listeners: automatically push a menu to authorized users when a datapoint condition matches
+- Added HTTP-request buttons (with optional Basic Auth)
+- Added multi-status buttons (more than two states, each with its own emoji/label/target)
+- Added an adjustable "buttons per row" global setting
+- Fixed status-dependent icons on menus not supporting comparison operators (e.g. `<25`) the way button icons already did
+- Public-release cleanup: removed the legacy JS-adapter compatibility bridge and demo/example content, generic example registry, English README
+- Fixed a compact-mode safety issue where event-trigger state was stored at module scope instead of per adapter instance
+
+### 0.1.0
+
+- Initial version: visual node editor, menu/button system, notification engine with permissions, and script bridge
+
 ## License
 
-MIT
+MIT License
+
+Copyright (c) 2026 backfisch88
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.

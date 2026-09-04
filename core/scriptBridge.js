@@ -73,7 +73,7 @@ function createScriptBridge(adapter) {
         const jsInstance = adapter.config.javascriptInstance || 'javascript.0';
         return new Promise(resolve => {
             let settled = false;
-            const timer = setTimeout(() => {
+            const timer = adapter.setTimeout(() => {
                 if (!settled) {
                     settled = true;
                     adapter.log.warn(
@@ -88,7 +88,7 @@ function createScriptBridge(adapter) {
                     return;
                 }
                 settled = true;
-                clearTimeout(timer);
+                adapter.clearTimeout(timer);
                 resolve(res);
             });
         });

@@ -1,0 +1,9 @@
+{
+  "Telegram instance": "Instance Telegram",
+  "The telegram.0 instance telegrammenu2 sends/receives through (communicate.request).": "L'instance telegram.0 par laquelle telegrammenu2 envoie/reçoit (communicate.request).",
+  "JavaScript instance (for script bridge)": "Instance JavaScript (pour le pont de scripts)",
+  "The instance your Telegram scripts run under (for the script bridge / onMessage calls).": "L'instance sous laquelle vos scripts Telegram s'exécutent (pour le pont de scripts / appels onMessage).",
+  "Script folder (for short script names)": "Dossier de scripts (pour les noms de scripts courts)",
+  "If you only enter a short name in the editor tab (e.g. \"myScript\" instead of \"script.js.Telegram.myScript\"), this folder is prepended automatically.": "Si vous saisissez uniquement un nom court dans l'onglet éditeur (ex. \"myScript\" au lieu de \"script.js.Telegram.myScript\"), ce dossier est ajouté automatiquement.",
+  "Menu import currently works via sendTo('telegrammenu2.0', 'importRegistry', <JSON>) - a dedicated import button here is planned.": "L'importation de menu fonctionne actuellement via sendTo('telegrammenu2.0', 'importRegistry', <JSON>) - un bouton d'importation dédié est prévu."
+}

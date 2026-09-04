@@ -425,13 +425,13 @@ function createNotifyEngine(adapter) {
             buffers[userKey].push({ area, type, text, html, noPreview });
 
             if (!timers[userKey]) {
-                timers[userKey] = setTimeout(() => flush(userKey, chatId), GROUP_WINDOW_MS);
+                timers[userKey] = adapter.setTimeout(() => flush(userKey, chatId), GROUP_WINDOW_MS);
             }
         }
     }
 
     function clearTimers() {
-        Object.values(timers).forEach(t => clearTimeout(t));
+        Object.values(timers).forEach(t => adapter.clearTimeout(t));
     }
 
     // Liefert alle gerade gesammelten (gebündelten, aber noch nicht

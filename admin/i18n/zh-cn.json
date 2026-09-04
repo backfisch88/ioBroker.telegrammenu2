@@ -1,0 +1,9 @@
+{
+  "Telegram instance": "Telegram 实例",
+  "The telegram.0 instance telegrammenu2 sends/receives through (communicate.request).": "telegrammenu2 用于收发消息的 telegram.0 实例（communicate.request）。",
+  "JavaScript instance (for script bridge)": "JavaScript 实例（用于脚本桥接）",
+  "The instance your Telegram scripts run under (for the script bridge / onMessage calls).": "您的 Telegram 脚本运行所在的实例（用于脚本桥接 / onMessage 调用）。",
+  "Script folder (for short script names)": "脚本文件夹（用于简短脚本名）",
+  "If you only enter a short name in the editor tab (e.g. \"myScript\" instead of \"script.js.Telegram.myScript\"), this folder is prepended automatically.": "如果您在编辑器标签中只输入简短名称（例如用 \"myScript\" 代替 \"script.js.Telegram.myScript\"），系统会自动添加此文件夹前缀。",
+  "Menu import currently works via sendTo('telegrammenu2.0', 'importRegistry', <JSON>) - a dedicated import button here is planned.": "目前菜单导入通过 sendTo('telegrammenu2.0', 'importRegistry', <JSON>) 实现——计划在此添加专用导入按钮。"
+}

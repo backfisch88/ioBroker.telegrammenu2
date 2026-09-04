@@ -18,6 +18,8 @@ const sentMessages = [];
 const fakeAdapter = {
     config: { telegramInstance: 'telegram.0', scriptFolder: 'Telegram', javascriptInstance: 'javascript.5' },
     telegramInstance: 'telegram.0',
+    setTimeout: (fn, ms, ...args) => setTimeout(fn, ms, ...args),
+    clearTimeout: t => clearTimeout(t),
     log: {
         info: m => console.log('[info]', m),
         warn: m => console.log('[warn]', m),

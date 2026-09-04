@@ -1,0 +1,9 @@
+{
+  "Telegram instance": "Екземпляр Telegram",
+  "The telegram.0 instance telegrammenu2 sends/receives through (communicate.request).": "Екземпляр telegram.0, через який telegrammenu2 надсилає/отримує (communicate.request).",
+  "JavaScript instance (for script bridge)": "Екземпляр JavaScript (для мосту скриптів)",
+  "The instance your Telegram scripts run under (for the script bridge / onMessage calls).": "Екземпляр, під яким виконуються ваші скрипти Telegram (для мосту скриптів / викликів onMessage).",
+  "Script folder (for short script names)": "Папка скриптів (для коротких імен скриптів)",
+  "If you only enter a short name in the editor tab (e.g. \"myScript\" instead of \"script.js.Telegram.myScript\"), this folder is prepended automatically.": "Якщо у вкладці редактора вказано лише коротке ім'я (напр. \"myScript\" замість \"script.js.Telegram.myScript\"), ця папка додається автоматично.",
+  "Menu import currently works via sendTo('telegrammenu2.0', 'importRegistry', <JSON>) - a dedicated import button here is planned.": "Імпорт меню наразі працює через sendTo('telegrammenu2.0', 'importRegistry', <JSON>) - окрема кнопка імпорту тут запланована."
+}
