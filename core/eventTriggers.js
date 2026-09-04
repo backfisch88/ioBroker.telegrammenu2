@@ -3,9 +3,11 @@
 const { hasPermission, isApproved, listUsers } = require('./users');
 const { matchesRuleValue } = require('./template');
 
-// datapoint -> [{ menuKey, trigger, perm }] - mehrere Menüs können denselben
-// Datenpunkt beobachten (z. B. verschiedene Schwellwerte).
-let subscribedMap = {};
+// WICHTIG (Compact-Mode-Sicherheit): subscribedMap lebt bewusst NICHT auf
+// Modul-Ebene, sondern am adapter-Objekt selbst (adapter._eventTriggerMap).
+// Ein modul-weiter State würde sich zwischen zwei Instanzen dieses Adapters
+// vermischen, falls beide im selben Prozess laufen (compact: true) - genau
+// dieses Muster hat bei einem anderen Adapter zu einem echten Bug geführt.
 
 // menuDef.trigger = { datapoint, value, ackOnly }
 // "value" nutzt dieselbe Vergleichslogik wie die Status-abhängigen Icons
@@ -23,6 +25,7 @@ function matchesTrigger(trigger, state) {
 // mit, nur beim initialen Voll-Import. Direktes Pattern-Matching ist robust
 // unabhängig davon, ob "_index" gerade aktuell ist.
 async function setupEventTriggers(adapter) {
+  const prevMap = adapter._eventTriggerMap || {};
   const nextMap = {};
   let states;
   try {
@@ -52,7 +55,7 @@ async function setupEventTriggers(adapter) {
   // Nur NEU hinzugekommene Datenpunkte abonnieren - subscribeForeignStatesAsync
   // ist idempotent, aber wir vermeiden trotzdem unnötige Calls bei jedem Rescan.
   for (const dp of Object.keys(nextMap)) {
-    if (!subscribedMap[dp]) {
+    if (!prevMap[dp]) {
       try {
         await adapter.subscribeForeignStatesAsync(dp);
       } catch (e) {
@@ -61,16 +64,16 @@ async function setupEventTriggers(adapter) {
     }
   }
 
-  subscribedMap = nextMap;
-  const total = Object.values(subscribedMap).reduce((a, arr) => a + arr.length, 0);
-  adapter.log.info(`Event-Listener: ${Object.keys(subscribedMap).length} Datenpunkt(e) beobachtet, ${total} Menü-Trigger aktiv.`);
+  adapter._eventTriggerMap = nextMap;
+  const total = Object.values(nextMap).reduce((a, arr) => a + arr.length, 0);
+  adapter.log.info(`Event-Listener: ${Object.keys(nextMap).length} Datenpunkt(e) beobachtet, ${total} Menü-Trigger aktiv.`);
 }
 
 // Bei jeder eingehenden State-Änderung aufgerufen (aus onStateChange). Prüft
 // nur Datenpunkte, die tatsächlich als Trigger konfiguriert sind - für alle
 // anderen ist die Funktion ein no-op (schneller Map-Lookup).
 async function handleEventTriggerStateChange(adapter, id, state, renderMenu) {
-  const entries = subscribedMap[id];
+  const entries = (adapter._eventTriggerMap || {})[id];
   if (!entries || !entries.length) return;
 
   for (const entry of entries) {

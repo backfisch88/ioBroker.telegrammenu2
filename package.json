@@ -16,6 +16,9 @@
     "url": "https://github.com/backfisch88/ioBroker.telegrammenu2/issues"
   },
   "main": "main.js",
+  "scripts": {
+    "test": "node test/smoke.js"
+  },
   "files": [
     "admin/",
     "core/",
@@ -24,6 +27,7 @@
     "main.js",
     "registryExample.json",
     "README.md",
+    "CHANGELOG.md",
     "LICENSE"
   ],
   "dependencies": {

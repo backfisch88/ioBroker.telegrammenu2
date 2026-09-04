@@ -5,6 +5,16 @@
     "title": "Telegram Menu 2",
     "messagebox": true,
     "titleLang": { "en": "Telegram Menu 2", "de": "Telegram Menü 2" },
+    "news": {
+      "0.2.0": {
+        "en": "Added: percent-step/number-range value pickers with inline keyboard and numeric-keypad custom entry, event listeners (auto-open a menu when a datapoint condition matches), HTTP-request buttons, multi-status buttons, adjustable buttons-per-row, and public-release cleanup (removed legacy bridge and demo content).",
+        "de": "Neu: Prozent-Stufen/Zahlenbereich-Werteauswahl per Inline-Keyboard und Ziffernblock-Freitexteingabe, Event-Listener (automatisches Öffnen eines Menüs bei Datenpunkt-Bedingung), HTTP-Request-Buttons, Multi-Status-Buttons, einstellbare Buttons pro Zeile, sowie Aufräumarbeiten für die öffentliche Veröffentlichung (Legacy-Brücke und Demo-Inhalte entfernt)."
+      },
+      "0.1.0": {
+        "en": "Initial version: visual node editor, menu/button system, notification engine with permissions, and script bridge.",
+        "de": "Erste Version: visueller Node-Editor, Menü-/Button-System, Notify-Engine mit Rechteverwaltung und Skript-Bridge."
+      }
+    },
     "desc": {
       "en": "Self-contained Telegram menu system: router, notify engine, user rights and pluggable domain modules.",
       "de": "Eigenständiges Telegram-Menüsystem: Router, Notify-Engine, Rechteverwaltung und erweiterbare Fachmodule."
