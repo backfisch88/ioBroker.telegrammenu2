@@ -6,12 +6,12 @@
 // ein (Menü-Knoten-Panel: "Anzeigename für den Bereich").
 
 const LABELS = {
-  admin: 'Administrator',
-  settings: 'Einstellungen',
+    admin: 'Administrator',
+    settings: 'Einstellungen',
 };
 
 function permLabel(perm) {
-  return LABELS[perm] || perm;
+    return LABELS[perm] || perm;
 }
 
 module.exports = { permLabel, LABELS };

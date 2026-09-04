@@ -17,7 +17,8 @@
   },
   "main": "main.js",
   "scripts": {
-    "test": "node test/smoke.js"
+    "test": "node test/smoke.js",
+    "lint": "eslint ."
   },
   "files": [
     "admin/",
@@ -31,7 +32,14 @@
     "LICENSE"
   ],
   "dependencies": {
-    "@iobroker/adapter-core": "^3.1.0"
+    "@iobroker/adapter-core": "^3.4.3"
+  },
+  "devDependencies": {
+    "@iobroker/testing": "^5.2.2",
+    "@iobroker/eslint-config": "^2.3.4",
+    "@iobroker/adapter-dev": "^1.5.0",
+    "@alcalzone/release-script": "^5.2.1",
+    "@types/node": ">=22"
   },
   "engines": {
     "node": ">=22.0.0"
