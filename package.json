@@ -21,7 +21,8 @@
     "test:unit": "node test/smoke.js",
     "test:integration": "mocha test/integration --exit --timeout 60000",
     "test": "npm run test:package && npm run test:unit",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "release": "release-script"
   },
   "files": [
     "admin/",
