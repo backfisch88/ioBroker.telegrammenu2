@@ -7,7 +7,7 @@
 
 A self-contained Telegram bot adapter for ioBroker, built around a **visual, no-code menu editor**. Design your bot's menus, buttons, and notifications by dragging nodes on a canvas — no scripting required for most use cases.
 
-![Example main menu in Telegram](img/screenshot-main-menu.jpg)
+![Node editor example](img/screenshot-node-editor.jpg)
 
 ## Why this exists
 
@@ -16,9 +16,6 @@ Building a Telegram bot for your smart home usually means writing (and maintaini
 ## Features
 
 - **Visual node editor** — a full [React Flow](https://reactflow.dev/) graph editor running as its own ioBroker Admin tab. Build your menu tree, wire up buttons, connect to a live ioBroker instance to load/save, or export/import as JSON.
-
-  ![Node editor example](img/screenshot-node-editor.jpg)
-
 - **Six button types**, all wired up in the editor without code:
   - **Menu** — a container of buttons, optionally with a dynamic title (from a script or a live datapoint), an image, or a permission requirement
   - **Toggle / Number / Text input** — bound directly to a datapoint (on/off, fixed value, numeric keypad, or free-text entry)
@@ -119,7 +116,11 @@ See `registryExample.json` for a worked example (a weather button with a message
 
 A sub-menu — reached via the main menu, with a "back"/"main menu" combo button at the end:
 
-![Example sub-menu in Telegram](img/screenshot-balkon-submenu.jpg)
+![Example sub-menu in Telegram](img/screenshot-submenu-verbrauch.jpg)
+
+...reached from a main menu like this one:
+
+![Example main menu in Telegram](img/screenshot-main-menu.jpg)
 
 ## Building your own script-backed buttons
 
