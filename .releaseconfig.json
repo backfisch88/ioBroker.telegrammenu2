@@ -1,3 +1,4 @@
 {
-  "issueLinks": false
+  "issueLinks": false,
+  "plugins": ["iobroker", "license", "manual-review"]
 }

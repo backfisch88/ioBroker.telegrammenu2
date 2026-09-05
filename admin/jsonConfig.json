@@ -7,26 +7,42 @@
       "adapter": "telegram",
       "label": "Telegram instance",
       "help": "The telegram.0 instance telegrammenu2 sends/receives through (communicate.request).",
-      "sm": 12
+      "xs": 12,
+      "sm": 12,
+      "md": 12,
+      "lg": 12,
+      "xl": 12
     },
     "javascriptInstance": {
       "type": "instance",
       "adapter": "javascript",
       "label": "JavaScript instance (for script bridge)",
       "help": "The instance your Telegram scripts run under (for the script bridge / onMessage calls).",
-      "sm": 12
+      "xs": 12,
+      "sm": 12,
+      "md": 12,
+      "lg": 12,
+      "xl": 12
     },
     "scriptFolder": {
       "type": "text",
       "label": "Script folder (for short script names)",
       "help": "If you only enter a short name in the editor tab (e.g. \"myScript\" instead of \"script.js.Telegram.myScript\"), this folder is prepended automatically.",
       "default": "Telegram",
-      "sm": 12
+      "xs": 12,
+      "sm": 12,
+      "md": 12,
+      "lg": 12,
+      "xl": 12
     },
     "_note": {
       "type": "staticText",
       "text": "Menu import currently works via sendTo('telegrammenu2.0', 'importRegistry', <JSON>) - a dedicated import button here is planned.",
-      "sm": 12
+      "xs": 12,
+      "sm": 12,
+      "md": 12,
+      "lg": 12,
+      "xl": 12
     }
   }
 }
