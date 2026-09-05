@@ -25,7 +25,7 @@ Building a Telegram bot for your smart home usually means writing (and maintaini
 - **Message templates** — `{{datapoint.id}}` placeholders resolve to live values anywhere in a button's text or confirmation message, including inline math (`{{datapoint.id / 60}}`) and automatic boolean/date formatting
 - **Status-dependent icons** — a menu or button's emoji can change based on a datapoint's current value/rules, including comparison operators (see below)
 - **Permission system** — per-button/per-menu permissions, a user approval gate for new Telegram users, and an admin menu to manage roles and rights (see "Users & Permissions" below)
-- **Notification engine** — `notify(area, type, text)` with per-area/per-type user preferences, grouping of rapid-fire notifications, snooze/pause per area, and optional HTML formatting or link-preview suppression
+- **Notification engine** — `sendTo('telegrammenu2.0', 'notify', { area, type, text })` with per-area/per-type user preferences, grouping of rapid-fire notifications, snooze/pause per area, and optional HTML formatting or link-preview suppression
 - **Event listeners** — watch any datapoint and automatically push an interactive menu to every authorized user when a condition matches (value, comparison operator, optional `ack` check)
 - **Script bridge** — any `javascript.0` script can register an `onMessage` handler and return `{ text, html, noPreview, menuKey, awaitReply }` to answer a button press, ask a follow-up question, or jump to another menu
 
@@ -128,15 +128,6 @@ No registration call needed — just set the script's ID and the command string 
 - Node.js >= 22 (uses the built-in `fetch` for the HTTP-request buttons)
 - js-controller >= 5.0.0
 - An existing, configured `iobroker.telegram` instance
-
-## Running the tests
-
-```bash
-npm install
-node test/smoke.js
-```
-
-Runs the full router/notify/permission/registry flow against a simulated adapter — no real ioBroker installation required.
 
 ## Changelog
 
