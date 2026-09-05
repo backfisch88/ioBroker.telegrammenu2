@@ -1,4 +1,9 @@
+![Logo](admin/telegrammenu2.png)
+
 # ioBroker.telegrammenu2
+
+[![NPM version](https://img.shields.io/npm/v/iobroker.telegrammenu2.svg)](https://www.npmjs.com/package/iobroker.telegrammenu2)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 A self-contained Telegram bot adapter for ioBroker, built around a **visual, no-code menu editor**. Design your bot's menus, buttons, and notifications by dragging nodes on a canvas — no scripting required for most use cases.
 
