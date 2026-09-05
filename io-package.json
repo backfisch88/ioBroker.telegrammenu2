@@ -29,32 +29,6 @@
         "pl": "Utrzymanie repozytorium: oficjalna konfiguracja CI ioBroker (linting, testy jednostkowe/integracyjne/pakietu), spójne wersjonowanie w package.json/io-package.json/tagach git, poprawiony schemat konfiguracji admin oraz konfiguracja release-script.",
         "uk": "Обслуговування репозиторію: офіційне налаштування CI ioBroker (лінтинг, юніт-/інтеграційні/пакетні тести), узгоджене версіонування в package.json/io-package.json/тегах git, виправлена схема конфігурації адмінки та налаштування release-script.",
         "zh-cn": "仓库维护：官方 ioBroker CI 配置（代码检查、单元/集成/包测试）、package.json/io-package.json/git 标签之间版本号一致、修正了管理界面配置架构，并配置了 release-script。"
-      },
-      "0.2.0": {
-        "en": "Added: percent-step/number-range value pickers with inline keyboard and numeric-keypad custom entry, event listeners (auto-open a menu when a datapoint condition matches), HTTP-request buttons, multi-status buttons, adjustable buttons-per-row, and public-release cleanup (removed legacy bridge and demo content).",
-        "de": "Neu: Prozent-Stufen/Zahlenbereich-Werteauswahl per Inline-Keyboard und Ziffernblock-Freitexteingabe, Event-Listener (automatisches Öffnen eines Menüs bei Datenpunkt-Bedingung), HTTP-Request-Buttons, Multi-Status-Buttons, einstellbare Buttons pro Zeile, sowie Aufräumarbeiten für die öffentliche Veröffentlichung (Legacy-Brücke und Demo-Inhalte entfernt).",
-        "ru": "Добавлено: выбор значений по процентным шагам/числовому диапазону через inline-клавиатуру и ввод произвольного значения с цифровой клавиатуры, слушатели событий (автоматическое открытие меню при выполнении условия датапоинта), кнопки HTTP-запросов, кнопки с несколькими статусами, настраиваемое число кнопок в строке, а также очистка для публичного релиза (удалён устаревший мост и демо-контент).",
-        "pt": "Adicionado: seletores de valores por passos percentuais/intervalo numérico com teclado inline e entrada personalizada via teclado numérico, listeners de eventos (abre automaticamente um menu quando uma condição de datapoint é atendida), botões de requisição HTTP, botões multi-status, número de botões por linha ajustável, e limpeza para lançamento público (removida a ponte legada e conteúdo de demonstração).",
-        "nl": "Toegevoegd: percentage-stap/getalbereik-waardekiezers met inline toetsenbord en aangepaste invoer via numeriek toetsenbord, event-listeners (opent automatisch een menu wanneer aan een datapoint-voorwaarde wordt voldaan), HTTP-request-knoppen, multi-status-knoppen, instelbaar aantal knoppen per rij, en opschoning voor openbare release (legacy-brug en demo-inhoud verwijderd).",
-        "fr": "Ajout : sélecteurs de valeurs par paliers de pourcentage/plage numérique avec clavier intégré et saisie personnalisée via pavé numérique, écouteurs d'événements (ouvre automatiquement un menu lorsqu'une condition de point de données est remplie), boutons de requête HTTP, boutons multi-statuts, nombre de boutons par ligne réglable, et nettoyage pour la publication publique (pont hérité et contenu de démonstration supprimés).",
-        "it": "Aggiunto: selettori di valori a step percentuali/intervallo numerico con tastiera inline e inserimento personalizzato tramite tastierino numerico, listener di eventi (apre automaticamente un menu quando una condizione su un datapoint è soddisfatta), pulsanti di richiesta HTTP, pulsanti multi-stato, numero di pulsanti per riga regolabile, e pulizia per il rilascio pubblico (rimossi il ponte legacy e i contenuti demo).",
-        "es": "Añadido: selectores de valores por pasos porcentuales/rango numérico con teclado en línea y entrada personalizada mediante teclado numérico, escuchas de eventos (abre automáticamente un menú cuando se cumple una condición de un datapoint), botones de petición HTTP, botones multi-estado, número de botones por fila ajustable, y limpieza para el lanzamiento público (eliminado el puente heredado y el contenido de demostración).",
-        "pl": "Dodano: selektory wartości w krokach procentowych/zakresie liczbowym z klawiaturą wbudowaną i wprowadzaniem niestandardowym za pomocą klawiatury numerycznej, nasłuchiwacze zdarzeń (automatyczne otwieranie menu po spełnieniu warunku punktu danych), przyciski żądań HTTP, przyciski wielostanowe, regulowaną liczbę przycisków w rzędzie oraz porządki przed publicznym wydaniem (usunięto starszy mostek i przykładową zawartość).",
-        "uk": "Додано: вибір значень за відсотковими кроками/числовим діапазоном через вбудовану клавіатуру та власне введення за допомогою цифрової клавіатури, слухачі подій (автоматичне відкриття меню при виконанні умови точки даних), кнопки HTTP-запитів, багатостатусні кнопки, регульовану кількість кнопок у рядку, а також очищення для публічного релізу (видалено застарілий міст і демо-вміст).",
-        "zh-cn": "新增：带内联键盘的百分比步进/数值范围选择器及数字键盘自定义输入、事件监听器（数据点条件满足时自动打开菜单）、HTTP 请求按钮、多状态按钮、可调整的每行按钮数，以及为公开发布所做的清理（移除了旧版桥接和演示内容）。"
-      },
-      "0.1.0": {
-        "en": "Initial version: visual node editor, menu/button system, notification engine with permissions, and script bridge.",
-        "de": "Erste Version: visueller Node-Editor, Menü-/Button-System, Notify-Engine mit Rechteverwaltung und Skript-Bridge.",
-        "ru": "Первая версия: визуальный редактор узлов, система меню/кнопок, движок уведомлений с правами доступа и мост скриптов.",
-        "pt": "Versão inicial: editor visual de nós, sistema de menus/botões, motor de notificações com permissões e ponte de scripts.",
-        "nl": "Eerste versie: visuele node-editor, menu-/knoppensysteem, meldingsmotor met rechten en scriptbrug.",
-        "fr": "Version initiale : éditeur de nœuds visuel, système de menus/boutons, moteur de notifications avec permissions, et pont de scripts.",
-        "it": "Versione iniziale: editor visuale a nodi, sistema di menu/pulsanti, motore di notifiche con permessi e ponte per script.",
-        "es": "Versión inicial: editor visual de nodos, sistema de menús/botones, motor de notificaciones con permisos y puente de scripts.",
-        "pl": "Wersja początkowa: wizualny edytor węzłów, system menu/przycisków, silnik powiadomień z uprawnieniami oraz mostek skryptowy.",
-        "uk": "Початкова версія: візуальний редактор вузлів, система меню/кнопок, рушій сповіщень із правами доступу та міст скриптів.",
-        "zh-cn": "初始版本：可视化节点编辑器、菜单/按钮系统、带权限的通知引擎，以及脚本桥接。"
       }
     },
     "desc": {

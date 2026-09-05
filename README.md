@@ -135,6 +135,10 @@ Runs the full router/notify/permission/registry flow against a simulated adapter
 
 ## Changelog
 
+### 0.2.2
+
+- Repository maintenance: official ioBroker CI setup (linting, unit/integration/package tests), consistent versioning across package.json/io-package.json/git tags, corrected admin config schema, and release-script configuration
+
 ### 0.2.0
 
 - Added percent-step/number-range value pickers (inline keyboard with the current value marked, plus a numeric-keypad "custom value" option supporting decimals)
