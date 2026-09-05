@@ -1,7 +1,7 @@
 {
   "common": {
     "name": "telegrammenu2",
-    "version": "0.2.2",
+    "version": "0.2.3",
     "messagebox": true,
     "titleLang": {
       "en": "Telegram Menu 2",
@@ -17,6 +17,19 @@
       "zh-cn": "Telegram Menu 2"
     },
     "news": {
+      "0.2.3": {
+        "en": "Repository maintenance: npm Trusted Publishing (OIDC) configured, no functional changes.",
+        "de": "Repository-Pflege: npm Trusted Publishing (OIDC) eingerichtet, keine funktionalen Änderungen.",
+        "ru": "Обслуживание репозитория: настроена доверенная публикация npm (OIDC), без функциональных изменений.",
+        "pt": "Manutenção do repositório: publicação confiável do npm (OIDC) configurada, sem alterações funcionais.",
+        "nl": "Repository-onderhoud: npm Trusted Publishing (OIDC) ingesteld, geen functionele wijzigingen.",
+        "fr": "Maintenance du dépôt : publication de confiance npm (OIDC) configurée, aucun changement fonctionnel.",
+        "it": "Manutenzione del repository: pubblicazione affidabile npm (OIDC) configurata, nessuna modifica funzionale.",
+        "es": "Mantenimiento del repositorio: publicación confiable de npm (OIDC) configurada, sin cambios funcionales.",
+        "pl": "Utrzymanie repozytorium: skonfigurowano zaufaną publikację npm (OIDC), brak zmian funkcjonalnych.",
+        "uk": "Обслуговування репозиторію: налаштовано довірену публікацію npm (OIDC), без функціональних змін.",
+        "zh-cn": "仓库维护：已配置 npm 可信发布（OIDC），无功能性更改。"
+      },
       "0.2.2": {
         "en": "Repository maintenance: official ioBroker CI setup (linting, unit/integration/package tests), consistent versioning across package.json/io-package.json/git tags, corrected admin config schema, and release-script configuration.",
         "de": "Repository-Pflege: offizielles ioBroker-CI-Setup (Linting, Unit-/Integrations-/Package-Tests), einheitliche Versionierung über package.json/io-package.json/Git-Tags, korrigiertes Admin-Config-Schema und Release-Script-Konfiguration.",

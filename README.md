@@ -135,6 +135,10 @@ Runs the full router/notify/permission/registry flow against a simulated adapter
 
 ## Changelog
 
+### 0.2.3
+
+- Repository maintenance: npm Trusted Publishing (OIDC) configured, no functional changes
+
 ### 0.2.2
 
 - Repository maintenance: official ioBroker CI setup (linting, unit/integration/package tests), consistent versioning across package.json/io-package.json/git tags, corrected admin config schema, and release-script configuration
