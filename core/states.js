@@ -15,15 +15,41 @@ const CORE_STATES = [
 
     { id: 'cmd.id', def: '', role: 'text' },
     { id: 'cmd.value', def: '', role: 'text' },
-    { id: 'cmd.ts', def: 0, role: 'value' },
+    { id: 'cmd.ts', def: 0, role: 'value', write: false },
 
     { id: 'render.menuKey', def: '', role: 'text' },
     { id: 'render.text', def: '', role: 'text' },
-    { id: 'render.ts', def: 0, role: 'value' },
+    { id: 'render.ts', def: 0, role: 'value', write: false },
 ];
+
+// Roles that ioBroker's state-role convention (see stateroles.md) requires
+// to be read-only from the outside. We still write these ourselves from
+// within the adapter (setState doesn't care about common.write - that flag
+// only governs external/UI writes), so this is purely a metadata fix.
+const READONLY_ROLES = new Set(['value', 'indicator']);
+
+// Creates every missing intermediate "channel" object for a dotted state id,
+// e.g. for "users.foo.permissions.bar" this ensures "users", "users.foo" and
+// "users.foo.permissions" all exist as channel objects. Without this, ioBroker
+// (and the repository checker) considers the object tree broken - states are
+// leaf nodes and every path segment above them needs a real object.
+async function ensureChannelPath(adapter, id) {
+    const segments = id.split('.');
+    let path = '';
+    // The last segment is the state itself, not a channel - stop before it.
+    for (let i = 0; i < segments.length - 1; i++) {
+        path = path ? `${path}.${segments[i]}` : segments[i];
+        await adapter.setObjectNotExistsAsync(path, {
+            type: 'channel',
+            common: { name: segments[i] },
+            native: {},
+        });
+    }
+}
 
 async function ensureCoreStates(adapter) {
     for (const s of CORE_STATES) {
+        await ensureChannelPath(adapter, s.id);
         await adapter.setObjectNotExistsAsync(s.id, {
             type: 'state',
             common: {
@@ -31,7 +57,7 @@ async function ensureCoreStates(adapter) {
                 type: typeof s.def === 'number' ? 'number' : 'string',
                 role: s.role,
                 read: true,
-                write: true,
+                write: s.write === undefined ? true : s.write,
             },
             native: {},
         });
@@ -47,6 +73,7 @@ async function ensureCoreStates(adapter) {
 async function ensureDynamicState(adapter, id, def, role = 'state') {
     const exists = await adapter.getObjectAsync(id);
     if (!exists) {
+        await ensureChannelPath(adapter, id);
         await adapter.setObjectNotExistsAsync(id, {
             type: 'state',
             common: {
@@ -54,7 +81,7 @@ async function ensureDynamicState(adapter, id, def, role = 'state') {
                 type: typeof def === 'number' ? 'number' : typeof def === 'boolean' ? 'boolean' : 'string',
                 role,
                 read: true,
-                write: true,
+                write: !READONLY_ROLES.has(role),
             },
             native: {},
         });
@@ -62,4 +89,4 @@ async function ensureDynamicState(adapter, id, def, role = 'state') {
     }
 }
 
-module.exports = { ensureCoreStates, ensureDynamicState, CORE_STATES };
+module.exports = { ensureCoreStates, ensureDynamicState, ensureChannelPath, CORE_STATES };
