@@ -1,7 +1,7 @@
 'use strict';
 
 const utils = require('@iobroker/adapter-core');
-const { ensureCoreStates, ensureDynamicState } = require('./core/states');
+const { ensureCoreStates, ensureDynamicState, migrateChannelObjects } = require('./core/states');
 const { createNotifyEngine } = require('./core/notify');
 const { createRouter } = require('./core/base');
 const { loadModules } = require('./core/moduleLoader');
@@ -21,6 +21,7 @@ class TelegramMenu2 extends utils.Adapter {
     }
 
     async onReady() {
+        await migrateChannelObjects(this);
         await ensureCoreStates(this);
 
         this.telegramInstance = this.config.telegramInstance || 'telegram.0';

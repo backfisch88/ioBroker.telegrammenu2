@@ -89,4 +89,59 @@ async function ensureDynamicState(adapter, id, def, role = 'state') {
     }
 }
 
-module.exports = { ensureCoreStates, ensureDynamicState, ensureChannelPath, CORE_STATES };
+// One-time migration for installations that already have states created by
+// an older adapter version (before ensureChannelPath/the write-flag fix
+// existed) - walks every existing object under this adapter instance and:
+//   (a) backfills any missing parent channel objects
+//   (b) corrects common.write on existing "value"/"indicator" states that
+//       were created before READONLY_ROLES existed (setObjectNotExistsAsync
+//       never touches an object that already exists, so that earlier fix
+//       only applied to brand-new states, not ones from before the fix).
+// Safe to run on every start: both operations are no-ops once corrected.
+async function migrateChannelObjects(adapter) {
+    let allObjects;
+    try {
+        allObjects = await adapter.getAdapterObjectsAsync();
+    } catch (e) {
+        adapter.log.warn(`Objekt-Migration übersprungen: ${e.message}`);
+        return;
+    }
+
+    const prefix = `${adapter.namespace}.`;
+    const stateIds = Object.keys(allObjects || {})
+        .filter(fullId => allObjects[fullId]?.type === 'state' && fullId.startsWith(prefix))
+        .map(fullId => fullId.slice(prefix.length));
+
+    let channelsCreated = 0;
+    let writeFlagsFixed = 0;
+
+    for (const id of stateIds) {
+        const segments = id.split('.');
+        for (let i = 0; i < segments.length - 1; i++) {
+            const path = segments.slice(0, i + 1).join('.');
+            if (!allObjects[`${prefix}${path}`]) {
+                await adapter.setObjectNotExistsAsync(path, {
+                    type: 'channel',
+                    common: { name: segments[i] },
+                    native: {},
+                });
+                channelsCreated++;
+            }
+        }
+
+        const obj = allObjects[`${prefix}${id}`];
+        const role = obj?.common?.role;
+        if (READONLY_ROLES.has(role) && obj.common.write !== false) {
+            await adapter.extendObjectAsync(id, { common: { write: false } });
+            writeFlagsFixed++;
+        }
+    }
+
+    if (channelsCreated || writeFlagsFixed) {
+        adapter.log.info(
+            `Objekt-Migration: ${channelsCreated} fehlende(s) Zwischenobjekt(e) ergänzt, ${writeFlagsFixed} write-Flag(s) korrigiert.`,
+        );
+    }
+}
+
+module.exports = { ensureCoreStates, ensureDynamicState, ensureChannelPath, migrateChannelObjects, CORE_STATES };

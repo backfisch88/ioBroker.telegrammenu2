@@ -37,6 +37,21 @@ const fakeAdapter = {
             store.set(`obj:${k}`, obj);
         }
     },
+    async extendObjectAsync(id, partial) {
+        const k = `${this.namespace}.${id}`;
+        const existing = store.get(`obj:${k}`) || { type: 'state', common: {}, native: {} };
+        const merged = { ...existing, common: { ...existing.common, ...(partial.common || {}) } };
+        store.set(`obj:${k}`, merged);
+    },
+    async getAdapterObjectsAsync() {
+        const result = {};
+        for (const [key, val] of store.entries()) {
+            if (key.startsWith('obj:')) {
+                result[key.slice('obj:'.length)] = val;
+            }
+        }
+        return result;
+    },
     async delObjectAsync(id) {
         const k = `${this.namespace}.${id}`;
         store.delete(`obj:${k}`);
@@ -2312,6 +2327,58 @@ async function run() {
     }
 
     global.fetch = originalFetch;
+
+    // --- Objekt-Migration: bestehende States (wie bei einer alten
+    // Installation vor diesem Fix) bekommen nachträglich ihre fehlenden
+    // Channel-Eltern UND ein korrigiertes write:false auf "indicator"/"value"-
+    // Rollen. Simuliert genau den Alt-Zustand, der beim echten Nutzer real
+    // aufgetreten ist (State ohne jedes Zwischenobjekt, write:true trotz
+    // "indicator"-Rolle).
+    await fakeAdapter.setObjectNotExistsAsync('users.migrationtest.permissions.Alt', {
+        type: 'state',
+        common: {
+            name: 'users.migrationtest.permissions.Alt',
+            type: 'boolean',
+            role: 'indicator',
+            read: true,
+            write: true,
+        },
+        native: {},
+    });
+    await fakeAdapter.setStateAsync('users.migrationtest.permissions.Alt', { val: true, ack: true });
+    const { migrateChannelObjects } = require('../core/states');
+    await migrateChannelObjects(fakeAdapter);
+
+    const migratedUsersChannel = await fakeAdapter.getObjectAsync('users');
+    const migratedUserChannel = await fakeAdapter.getObjectAsync('users.migrationtest');
+    const migratedPermsChannel = await fakeAdapter.getObjectAsync('users.migrationtest.permissions');
+    const migratedState = await fakeAdapter.getObjectAsync('users.migrationtest.permissions.Alt');
+    const migratedValue = await fakeAdapter.getStateAsync('users.migrationtest.permissions.Alt');
+    console.log('--- Migration: Channel-Objekte nachträglich angelegt? ---', {
+        users: migratedUsersChannel?.type,
+        user: migratedUserChannel?.type,
+        perms: migratedPermsChannel?.type,
+    });
+    if (
+        migratedUsersChannel?.type !== 'channel' ||
+        migratedUserChannel?.type !== 'channel' ||
+        migratedPermsChannel?.type !== 'channel'
+    ) {
+        throw new Error('Migration hat nicht alle fehlenden Zwischenobjekte (Channels) nachträglich angelegt!');
+    }
+    console.log(
+        '--- Migration: write-Flag auf bestehendem "indicator"-State korrigiert? ---',
+        migratedState?.common?.write,
+    );
+    if (migratedState?.common?.write !== false) {
+        throw new Error('Migration hat write:false bei einem bestehenden "indicator"-State nicht nachgezogen!');
+    }
+    console.log('--- Migration: Wert dabei unangetastet? (muss true bleiben) ---', migratedValue?.val);
+    if (migratedValue?.val !== true) {
+        throw new Error(
+            'Migration hat versehentlich den gespeicherten Wert verändert - genau das darf nicht passieren!',
+        );
+    }
 
     console.log('\n✅ Smoke-Test durchgelaufen ohne Exception.');
 }
