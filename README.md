@@ -150,6 +150,8 @@ Runs the full router/notify/permission/registry flow against a simulated adapter
 
 - Initial version: visual node editor, menu/button system, notification engine with permissions, and script bridge
 
+Older entries: see [CHANGELOG_OLD.md](CHANGELOG_OLD.md).
+
 ## License
 
 MIT License

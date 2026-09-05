@@ -1,7 +1,7 @@
 {
   "common": {
     "name": "telegrammenu2",
-    "version": "0.2.0",
+    "version": "0.2.2",
     "messagebox": true,
     "titleLang": {
       "en": "Telegram Menu 2",
@@ -17,6 +17,19 @@
       "zh-cn": "Telegram Menu 2"
     },
     "news": {
+      "0.2.2": {
+        "en": "Repository maintenance: official ioBroker CI setup (linting, unit/integration/package tests), consistent versioning across package.json/io-package.json/git tags, corrected admin config schema, and release-script configuration.",
+        "de": "Repository-Pflege: offizielles ioBroker-CI-Setup (Linting, Unit-/Integrations-/Package-Tests), einheitliche Versionierung über package.json/io-package.json/Git-Tags, korrigiertes Admin-Config-Schema und Release-Script-Konfiguration.",
+        "ru": "Обслуживание репозитория: официальная настройка CI ioBroker (линтинг, юнит-/интеграционные/пакетные тесты), согласованное версионирование в package.json/io-package.json/тегах git, исправленная схема конфигурации админки и настройка release-script.",
+        "pt": "Manutenção do repositório: configuração oficial de CI do ioBroker (lint, testes de unidade/integração/pacote), versionamento consistente entre package.json/io-package.json/tags git, esquema de configuração do admin corrigido e configuração do release-script.",
+        "nl": "Repository-onderhoud: officiële ioBroker CI-opzet (linting, unit-/integratie-/packagetests), consistente versienummering over package.json/io-package.json/git-tags, gecorrigeerd admin-configschema en release-script-configuratie.",
+        "fr": "Maintenance du dépôt : configuration CI officielle d'ioBroker (linting, tests unitaires/d'intégration/de package), versionnage cohérent entre package.json/io-package.json/tags git, schéma de configuration admin corrigé et configuration du release-script.",
+        "it": "Manutenzione del repository: configurazione CI ufficiale ioBroker (linting, test unitari/di integrazione/di pacchetto), versionamento coerente tra package.json/io-package.json/tag git, schema di configurazione admin corretto e configurazione del release-script.",
+        "es": "Mantenimiento del repositorio: configuración oficial de CI de ioBroker (linting, pruebas de unidad/integración/paquete), versionado consistente entre package.json/io-package.json/etiquetas git, esquema de configuración de admin corregido y configuración del release-script.",
+        "pl": "Utrzymanie repozytorium: oficjalna konfiguracja CI ioBroker (linting, testy jednostkowe/integracyjne/pakietu), spójne wersjonowanie w package.json/io-package.json/tagach git, poprawiony schemat konfiguracji admin oraz konfiguracja release-script.",
+        "uk": "Обслуговування репозиторію: офіційне налаштування CI ioBroker (лінтинг, юніт-/інтеграційні/пакетні тести), узгоджене версіонування в package.json/io-package.json/тегах git, виправлена схема конфігурації адмінки та налаштування release-script.",
+        "zh-cn": "仓库维护：官方 ioBroker CI 配置（代码检查、单元/集成/包测试）、package.json/io-package.json/git 标签之间版本号一致、修正了管理界面配置架构，并配置了 release-script。"
+      },
       "0.2.0": {
         "en": "Added: percent-step/number-range value pickers with inline keyboard and numeric-keypad custom entry, event listeners (auto-open a menu when a datapoint condition matches), HTTP-request buttons, multi-status buttons, adjustable buttons-per-row, and public-release cleanup (removed legacy bridge and demo content).",
         "de": "Neu: Prozent-Stufen/Zahlenbereich-Werteauswahl per Inline-Keyboard und Ziffernblock-Freitexteingabe, Event-Listener (automatisches Öffnen eines Menüs bei Datenpunkt-Bedingung), HTTP-Request-Buttons, Multi-Status-Buttons, einstellbare Buttons pro Zeile, sowie Aufräumarbeiten für die öffentliche Veröffentlichung (Legacy-Brücke und Demo-Inhalte entfernt).",
