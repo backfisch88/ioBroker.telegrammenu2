@@ -27,6 +27,7 @@
     "admin/",
     "core/",
     "modules/",
+    "img/",
     "io-package.json",
     "main.js",
     "registryExample.json",

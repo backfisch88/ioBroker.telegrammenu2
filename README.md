@@ -7,6 +7,8 @@
 
 A self-contained Telegram bot adapter for ioBroker, built around a **visual, no-code menu editor**. Design your bot's menus, buttons, and notifications by dragging nodes on a canvas — no scripting required for most use cases.
 
+![Example main menu in Telegram](img/screenshot-main-menu.jpg)
+
 ## Why this exists
 
 Building a Telegram bot for your smart home usually means writing (and maintaining) a pile of `sendTo()` calls, keyboard layouts, and command-routing logic by hand. This adapter turns that into a visual graph: menus are nodes, buttons are their children, and the whole tree exports straight into the adapter's registry. Change something in the editor, hit save, done.
@@ -14,6 +16,9 @@ Building a Telegram bot for your smart home usually means writing (and maintaini
 ## Features
 
 - **Visual node editor** — a full [React Flow](https://reactflow.dev/) graph editor running as its own ioBroker Admin tab. Build your menu tree, wire up buttons, connect to a live ioBroker instance to load/save, or export/import as JSON.
+
+  ![Node editor example](img/screenshot-node-editor.jpg)
+
 - **Six button types**, all wired up in the editor without code:
   - **Menu** — a container of buttons, optionally with a dynamic title (from a script or a live datapoint), an image, or a permission requirement
   - **Toggle / Number / Text input** — bound directly to a datapoint (on/off, fixed value, numeric keypad, or free-text entry)
@@ -22,6 +27,9 @@ Building a Telegram bot for your smart home usually means writing (and maintaini
   - **Multi-status** — a single button that cycles through more than two states, each with its own emoji, label, and target datapoint/value
 - **Auto-generated menus** — user management, notification preferences, and notification pausing are built in and update themselves automatically; no manual button wiring needed
 - **Percent-step / number-range pickers** — pick a value from an inline keyboard (with the current value marked ✅) or tap "custom value" to enter one via a real numeric keypad, including decimals
+
+  ![Percent-step picker example](img/screenshot-value-picker.jpg)
+
 - **Message templates** — `{{datapoint.id}}` placeholders resolve to live values anywhere in a button's text or confirmation message, including inline math (`{{datapoint.id / 60}}`) and automatic boolean/date formatting
 - **Status-dependent icons** — a menu or button's emoji can change based on a datapoint's current value/rules, including comparison operators (see below)
 - **Permission system** — per-button/per-menu permissions, a user approval gate for new Telegram users, and an admin menu to manage roles and rights (see "Users & Permissions" below)
@@ -108,6 +116,10 @@ Menus are stored as plain JSON objects, one per key, under the adapter's own `re
 4. Message your bot with `/start`.
 
 See `registryExample.json` for a worked example (a weather button with a message template, a sub-menu with datapoint-bound controls, and a status-dependent icon) — import it via the editor's "Import JSON" button to try it out.
+
+A sub-menu — reached via the main menu, with a "back"/"main menu" combo button at the end:
+
+![Example sub-menu in Telegram](img/screenshot-balkon-submenu.jpg)
 
 ## Building your own script-backed buttons
 
