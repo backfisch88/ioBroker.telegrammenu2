@@ -344,14 +344,31 @@ async function run() {
     await fakeAdapter.setStateAsync('users.123456.notify.spontanBereich.irgendwas', { val: true, ack: true });
     await fakeAdapter.notify.setOverride('spontanBereich', 'irgendwas', false);
 
-    // Admin soll freigeschaltete Benachrichtigungs-Bereiche sehen, auch ohne explizites permissions.<area>
+    // Admins unterliegen jetzt genauso der Berechtigungsprüfung wie alle
+    // anderen - ohne explizites permissions.<area> darf auch ein Admin den
+    // Bereich in der Präferenzenliste nicht sehen (er bekäme ja ohnehin keine
+    // tatsächliche Nachricht daraus, siehe notify.js send()).
     await fakeAdapter.setStateAsync('users.123456.permissions.spontanBereich', { val: false, ack: true });
     const { buildAutoRows } = require('../core/autoMenus');
+    const notifyRowsNoPerm = await buildAutoRows(fakeAdapter, { source: 'notifyPrefs' }, '123456');
+    const notifyTextsNoPerm = notifyRowsNoPerm.flat().map(b => b.text);
+    console.log('--- Benachrichtigungen-Liste, Admin OHNE Recht für spontanBereich ---', notifyTextsNoPerm);
+    if (notifyTextsNoPerm.some(t => t.includes('spontanBereich'))) {
+        throw new Error(
+            'Admin sieht einen Bereich ohne explizites Recht - Berechtigungsprüfung greift bei Admins nicht!',
+        );
+    }
+    if (!notifyTextsNoPerm.some(t => t.includes('weather'))) {
+        throw new Error('Bereich mit vorhandenem Recht ("weather") ist fälschlich mit verschwunden!');
+    }
+
+    // Recht nachträglich erteilen -> muss jetzt auftauchen
+    await fakeAdapter.setStateAsync('users.123456.permissions.spontanBereich', { val: true, ack: true });
     const notifyRows = await buildAutoRows(fakeAdapter, { source: 'notifyPrefs' }, '123456');
     const notifyTexts = notifyRows.flat().map(b => b.text);
-    console.log('--- Benachrichtigungen-Liste für Admin ---', notifyTexts);
-    if (!notifyTexts.some(t => t.includes('spontanBereich') || t.includes('Weather'))) {
-        throw new Error('Admin sieht Bereich ohne explizites Recht nicht - Fix hat nicht gegriffen!');
+    console.log('--- Benachrichtigungen-Liste, Admin MIT Recht für spontanBereich ---', notifyTexts);
+    if (!notifyTexts.some(t => t.includes('spontanBereich') || t.includes('weather'))) {
+        throw new Error('Bereich taucht auch mit erteiltem Recht nicht auf!');
     }
 
     // Anzeigename statt technischem Typ

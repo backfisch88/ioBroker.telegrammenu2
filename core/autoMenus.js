@@ -155,18 +155,15 @@ async function buildUserRows(adapter, buttonsPerRow) {
 // Bereiche haben.
 async function collectVisibleAreaTypes(adapter, userKey) {
     const areas = adapter.notify.getValidAreas();
-    const admin = await isAdmin(adapter, userKey);
 
     const groups = new Map(); // "Anzeigename" -> [{area, type}]
     const areaSet = new Set();
 
     for (const [area, types] of Object.entries(areas)) {
-        if (!admin) {
-            const permState = await adapter.getStateAsync(`users.${userKey}.permissions.${area}`);
-            const allowed = permState?.val === true || permState?.val === 'true';
-            if (!allowed) {
-                continue;
-            }
+        const permState = await adapter.getStateAsync(`users.${userKey}.permissions.${area}`);
+        const allowed = permState?.val === true || permState?.val === 'true';
+        if (!allowed) {
+            continue;
         }
         areaSet.add(area);
 
