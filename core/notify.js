@@ -195,6 +195,14 @@ function createNotifyEngine(adapter) {
         return out;
     }
 
+    // Escaped die drei von Telegrams HTML-Parser reservierten Zeichen, damit
+    // ein zufälliges "<"/">"/"&" in einer PLAIN-Text-Nachricht nicht als
+    // (kaputtes) HTML-Tag interpretiert wird, wenn sie zusammen mit einer
+    // ECHTEN HTML-Nachricht in einem Bündel landet.
+    function escapeHtml(str) {
+        return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+
     async function deliverToUser(userChatId, text, html = false, noPreview = false) {
         try {
             const payload = { text, user: userChatId };
@@ -217,14 +225,15 @@ function createNotifyEngine(adapter) {
         if (!items.length) {
             return;
         }
-        const text = items.map(i => i.text).join('\n\n');
-        // Nur wenn ALLE gebündelten Nachrichten html/noPreview angefordert haben,
-        // wird das für die ganze zusammengefasste Nachricht übernommen - sonst
-        // könnte z.B. ein "<"/">" aus einer unbeteiligten Plain-Text-Nachricht im
-        // selben Bündel versehentlich als kaputtes HTML-Tag interpretiert werden.
-        const allHtml = items.every(i => i.html);
-        const allNoPreview = items.every(i => i.noPreview);
-        await deliverToUser(userChatId, text, allHtml, allNoPreview);
+        // Sobald MINDESTENS EINE Nachricht im Bündel HTML will, wird die
+        // gesamte zusammengefasste Nachricht im HTML-Modus verschickt - die
+        // übrigen (nicht als HTML markierten) Teile werden dabei escaped,
+        // damit sie garantiert als reiner Text erscheinen, statt die
+        // HTML-Formatierung fürs ganze Bündel stillschweigend zu verwerfen.
+        const anyHtml = items.some(i => i.html);
+        const text = items.map(i => (anyHtml && !i.html ? escapeHtml(i.text) : i.text)).join('\n\n');
+        const anyNoPreview = items.some(i => i.noPreview);
+        await deliverToUser(userChatId, text, anyHtml, anyNoPreview);
     }
 
     // Bereich für X Stunden pausieren - "warn"/"error" kommen trotzdem durch

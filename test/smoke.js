@@ -1501,6 +1501,26 @@ async function run() {
         );
     }
 
+    // Gebündelte Nachrichten: eine mit HTML, eine ohne - die HTML-Formatierung
+    // darf dabei NICHT für's ganze Bündel verloren gehen (genau der vom
+    // Nutzer gemeldete Bug). Die Plain-Nachricht wird stattdessen escaped,
+    // damit sie sicher als reiner Text erscheint.
+    sentMessages.length = 0;
+    await fakeAdapter.notify('grouptest', 'info', 'Reiner < Text > ohne Formatierung');
+    await fakeAdapter.notify('grouptest', 'info', '<b>Fett</b> aus derselben Sammelphase', { html: true });
+    await fakeAdapter._flushAllPendingNotify();
+    const mixedHtmlMsg = sentMessages.at(-1);
+    console.log('--- Gebündelt: HTML + Plain gemischt ---', mixedHtmlMsg?.payload);
+    if (mixedHtmlMsg?.payload?.parse_mode !== 'HTML') {
+        throw new Error('HTML-Formatierung ist verloren gegangen, weil eine Plain-Text-Nachricht mitgebündelt wurde!');
+    }
+    if (!mixedHtmlMsg?.payload?.text?.includes('<b>Fett</b>')) {
+        throw new Error('Die tatsächlich als HTML markierte Teilnachricht wurde nicht unverändert übernommen!');
+    }
+    if (!mixedHtmlMsg?.payload?.text?.includes('Reiner &lt; Text &gt; ohne Formatierung')) {
+        throw new Error('Die Plain-Text-Teilnachricht wurde nicht (oder falsch) escaped!');
+    }
+
     // Bereich pausieren: "info" wird blockiert, "warn" kommt trotzdem durch
     // ("open" von der Standard-Bündelung ausschließen, damit die Zeitpunkt-Tests hier nicht verfälscht werden)
     await setMenu(fakeAdapter, 'main', {
@@ -2097,6 +2117,128 @@ async function run() {
     console.log('--- Verkettete Rechenoperation (185000/1000/60) ---', sentMessages.at(-1)?.payload?.text);
     if (sentMessages.at(-1)?.payload?.text !== '3 min') {
         throw new Error('Verkettete Rechenoperation falsch!');
+    }
+
+    // --- Mehrere Datenpunkte in einem Platzhalter (Prozent-Änderung) ---
+    await fakeAdapter.setForeignStateAsync('0_userdata.0.TestAktuellerMonat', { val: 160, ack: true });
+    await fakeAdapter.setForeignStateAsync('0_userdata.0.TestVormonat', { val: 180, ack: true });
+    await setMenu(fakeAdapter, 'main', {
+        title: '🏠 Hauptmenü',
+        message:
+            'Änderung: {{(0_userdata.0.TestAktuellerMonat - 0_userdata.0.TestVormonat) / 0_userdata.0.TestVormonat * 100}} %',
+        rows: [[{ text: '⬅️ Zurück', cmd: 'TG:NAV:BACK' }]],
+    });
+    sentMessages.length = 0;
+    await fakeAdapter.router.renderMenu('123456', 'main');
+    const multiDpText = sentMessages.at(-1)?.payload?.text;
+    console.log('--- Mehrere Datenpunkte im Platzhalter ((160-180)/180*100) ---', multiDpText);
+    if (multiDpText !== 'Änderung: -11 %') {
+        throw new Error(`Mehrere-Datenpunkte-Rechnung falsch, war: "${multiDpText}"`);
+    }
+
+    // Einer der beiden Datenpunkte existiert nicht -> '–' statt Absturz/Müll
+    await setMenu(fakeAdapter, 'main', {
+        title: '🏠 Hauptmenü',
+        message: 'Änderung: {{0_userdata.0.TestAktuellerMonat - 0_userdata.0.GibtsNicht}}',
+        rows: [[{ text: '⬅️ Zurück', cmd: 'TG:NAV:BACK' }]],
+    });
+    sentMessages.length = 0;
+    await fakeAdapter.router.renderMenu('123456', 'main');
+    const missingDpText = sentMessages.at(-1)?.payload?.text;
+    console.log('--- Mehrere Datenpunkte, einer fehlt ---', missingDpText);
+    if (missingDpText !== 'Änderung: –') {
+        throw new Error(
+            `Fehlender Datenpunkt in Mehrfach-Ausdruck wurde nicht sauber abgefangen, war: "${missingDpText}"`,
+        );
+    }
+
+    // Nenner ist ein Live-Datenpunkt und gerade 0 (z.B. Vormonat noch ohne
+    // Werte) -> '–' statt eines irreführenden Zahlenwerts. Genau der vom
+    // Nutzer gemeldete Bug: (0.298 - 0) / 0 * 100 lieferte vorher fälschlich
+    // 29/30 statt "nicht berechenbar".
+    await fakeAdapter.setForeignStateAsync('0_userdata.0.TestAktuellerMonat', { val: 0.298, ack: true });
+    await fakeAdapter.setForeignStateAsync('0_userdata.0.TestVormonat', { val: 0, ack: true });
+    await setMenu(fakeAdapter, 'main', {
+        title: '🏠 Hauptmenü',
+        message:
+            'Änderung: {{(0_userdata.0.TestAktuellerMonat - 0_userdata.0.TestVormonat) / 0_userdata.0.TestVormonat * 100}} %',
+        rows: [[{ text: '⬅️ Zurück', cmd: 'TG:NAV:BACK' }]],
+    });
+    sentMessages.length = 0;
+    await fakeAdapter.router.renderMenu('123456', 'main');
+    const divByZeroText = sentMessages.at(-1)?.payload?.text;
+    console.log('--- Division durch 0 (Vormonat=0) ---', divByZeroText);
+    if (divByZeroText !== 'Änderung: – %') {
+        throw new Error(`Division durch 0 wurde nicht sauber abgefangen, war: "${divByZeroText}"`);
+    }
+
+    // --- Bedingter Text je nach Vorzeichen (Ternary), wie in VIS ---
+    // Werte explizit neu setzen - der Division-durch-0-Test direkt davor hat
+    // TestVormonat auf 0 geändert.
+    await fakeAdapter.setForeignStateAsync('0_userdata.0.TestAktuellerMonat', { val: 160, ack: true });
+    await fakeAdapter.setForeignStateAsync('0_userdata.0.TestVormonat', { val: 180, ack: true });
+    await setMenu(fakeAdapter, 'main', {
+        title: '🏠 Hauptmenü',
+        message:
+            "{{(0_userdata.0.TestAktuellerMonat - 0_userdata.0.TestVormonat) < 0 ? '📉 gesunken' : '📈 gestiegen'}}",
+        rows: [[{ text: '⬅️ Zurück', cmd: 'TG:NAV:BACK' }]],
+    });
+    sentMessages.length = 0;
+    await fakeAdapter.router.renderMenu('123456', 'main');
+    const ternaryNegText = sentMessages.at(-1)?.payload?.text;
+    console.log('--- Ternary bei negativem Ergebnis (160-180<0) ---', ternaryNegText);
+    if (ternaryNegText !== '📉 gesunken') {
+        throw new Error(`Ternary-Ausdruck (negativ) falsch, war: "${ternaryNegText}"`);
+    }
+
+    await fakeAdapter.setForeignStateAsync('0_userdata.0.TestAktuellerMonat', { val: 200, ack: true });
+    sentMessages.length = 0;
+    await fakeAdapter.router.renderMenu('123456', 'main');
+    const ternaryPosText = sentMessages.at(-1)?.payload?.text;
+    console.log('--- Ternary bei positivem Ergebnis (200-180>=0) ---', ternaryPosText);
+    if (ternaryPosText !== '📈 gestiegen') {
+        throw new Error(`Ternary-Ausdruck (positiv) falsch, war: "${ternaryPosText}"`);
+    }
+
+    // --- Verkettete Ternarys: mehr als nur ja/nein (>0 / <0 / ==0) ---
+    await setMenu(fakeAdapter, 'main', {
+        title: '🏠 Hauptmenü',
+        message:
+            "{{(0_userdata.0.TestAktuellerMonat - 0_userdata.0.TestVormonat) > 0 ? '📈 gestiegen' : (0_userdata.0.TestAktuellerMonat - 0_userdata.0.TestVormonat) < 0 ? '📉 gesunken' : '➡️ gleich'}}",
+        rows: [[{ text: '⬅️ Zurück', cmd: 'TG:NAV:BACK' }]],
+    });
+    for (const [aktuell, erwartet] of [
+        [200, '📈 gestiegen'],
+        [160, '📉 gesunken'],
+        [180, '➡️ gleich'],
+    ]) {
+        await fakeAdapter.setForeignStateAsync('0_userdata.0.TestAktuellerMonat', { val: aktuell, ack: true });
+        sentMessages.length = 0;
+        await fakeAdapter.router.renderMenu('123456', 'main');
+        const chainedText = sentMessages.at(-1)?.payload?.text;
+        console.log(`--- Verkettetes Ternary (aktuell=${aktuell}, Vormonat=180) ---`, chainedText);
+        if (chainedText !== erwartet) {
+            throw new Error(
+                `Verkettetes Ternary falsch für aktuell=${aktuell}, erwartet "${erwartet}", war: "${chainedText}"`,
+            );
+        }
+    }
+
+    // --- Bestehendes Einzel-Datenpunkt-Verhalten (Bool/Datum) bleibt exakt gleich ---
+    await fakeAdapter.setForeignStateAsync('0_userdata.0.TestBoolUnchanged', { val: true, ack: true });
+    await setMenu(fakeAdapter, 'main', {
+        title: '🏠 Hauptmenü',
+        message: 'Status: {{0_userdata.0.TestBoolUnchanged}}',
+        rows: [[{ text: '⬅️ Zurück', cmd: 'TG:NAV:BACK' }]],
+    });
+    sentMessages.length = 0;
+    await fakeAdapter.router.renderMenu('123456', 'main');
+    const boolStillWorksText = sentMessages.at(-1)?.payload?.text;
+    console.log('--- Einzelner Datenpunkt: Bool-Formatierung weiterhin aktiv? ---', boolStillWorksText);
+    if (boolStillWorksText !== 'Status: ✅ an') {
+        throw new Error(
+            `Einzel-Datenpunkt-Bool-Formatierung durch die neue Engine kaputt gegangen, war: "${boolStillWorksText}"`,
+        );
     }
 
     // --- Freischalt-Gate für neue Nutzer ---

@@ -103,46 +103,165 @@ function formatPlaceholderValue(val, settings) {
     return String(val);
 }
 
-// Erkennt eine einfache Rechenoperation im Platzhalter, z.B.
-// "{{...FlowSeconds / 60}}" oder sogar verkettet "{{...Ms / 1000 / 60}}".
-// Der Datenpunkt-Teil darf keine Leerzeichen enthalten (haben ioBroker-IDs
-// nie), die Operation(en) werden per Leerzeichen davon getrennt erkannt.
-function parsePlaceholder(raw) {
-    const parts = raw.trim().split(/\s+/);
-    const id = parts[0];
-    const ops = [];
-    for (let i = 1; i + 1 < parts.length; i += 2) {
-        const op = parts[i];
-        const num = Number(parts[i + 1]);
-        if (['+', '-', '*', '/'].includes(op) && !Number.isNaN(num)) {
-            ops.push([op, num]);
+// Tokenizer für Ausdrücke innerhalb von {{...}}: Zahlen, Datenpunkt-IDs
+// (alles, was keine Zahl/Operator/String ist), Rechenoperatoren, Klammern,
+// Vergleichsoperatoren und '...'-String-Literale für den Ternary-Teil.
+// Bewusst KEIN eval() - das hier ist ein kleiner, sicherer, selbst
+// geschriebener Ausdrucks-Parser, auch wenn die Templates nur vom Admin im
+// Editor gesetzt werden.
+const TOKEN_RE = /\s*(?:'([^']*)'|(>=|<=|==|!=|[+\-*/()?:<>])|([^\s+\-*/()?:<>']+))/g;
+
+function tokenize(raw) {
+    const tokens = [];
+    let m;
+    TOKEN_RE.lastIndex = 0;
+    while ((m = TOKEN_RE.exec(raw)) !== null) {
+        if (m[1] !== undefined) {
+            tokens.push({ type: 'string', value: m[1] });
+        } else if (m[2] !== undefined) {
+            tokens.push({ type: 'op', value: m[2] });
+        } else if (m[3] !== undefined) {
+            const num = Number(m[3]);
+            tokens.push(Number.isNaN(num) ? { type: 'id', value: m[3] } : { type: 'num', value: num });
         }
     }
-    return { id, ops };
+    return tokens;
 }
 
-// Wendet die erkannten Operationen der Reihe nach an und rundet auf eine
-// ganze Zahl (der Hauptfall dafür ist "Sekunden durch 60 = Minuten,
-// gerundet"). Gibt null zurück, wenn der Wert keine Zahl ist (dann bleibt
-// der Platzhalter unverändert - kein Rechnen mit Text möglich).
-function applyPlaceholderMath(val, ops) {
-    const n = Number(val);
-    if (Number.isNaN(n)) {
+// Sammelt alle Datenpunkt-Referenzen (id-Tokens) aus einem Ausdruck, damit
+// resolveTemplate sie in einem Rutsch (dedupliziert) auflösen kann, bevor
+// der Ausdruck ausgewertet wird.
+function collectIds(tokens) {
+    return tokens.filter(t => t.type === 'id').map(t => t.value);
+}
+
+// Kleiner rekursiver Abstiegsparser mit der üblichen Priorität (Punkt vor
+// Strich, Vergleiche danach, "? 'a' : 'b'" ganz zuletzt) - erlaubt jetzt
+// mehrere Datenpunkte in einem Ausdruck, z.B. "(A - B) / B * 100" oder
+// "A - B > 0 ? '📈' : '📉'". Gibt bei einem Fehler (fehlender Wert, falsche
+// Syntax) null zurück statt zu werfen - resolveTemplate zeigt dann '–'.
+function evaluateExpression(tokens, values) {
+    let pos = 0;
+    const peek = () => tokens[pos];
+    const next = () => tokens[pos++];
+
+    function parsePrimary() {
+        const t = peek();
+        if (!t) {
+            throw new Error('unerwartetes Ende');
+        }
+        if (t.type === 'op' && t.value === '(') {
+            next();
+            const v = parseComparison();
+            if (!peek() || peek().value !== ')') {
+                throw new Error('schließende Klammer fehlt');
+            }
+            next();
+            return v;
+        }
+        if (t.type === 'op' && t.value === '-') {
+            next();
+            return -parsePrimary();
+        }
+        if (t.type === 'num') {
+            next();
+            return t.value;
+        }
+        if (t.type === 'id') {
+            next();
+            const raw = values[t.value];
+            const n = Number(raw);
+            if (raw === undefined || Number.isNaN(n)) {
+                throw new Error(`"${t.value}" ist keine Zahl`);
+            }
+            return n;
+        }
+        throw new Error('unerwartetes Token');
+    }
+
+    function parseMultiplicative() {
+        let v = parsePrimary();
+        while (peek() && peek().type === 'op' && (peek().value === '*' || peek().value === '/')) {
+            const op = next().value;
+            const rhs = parsePrimary();
+            if (op === '/' && rhs === 0) {
+                throw new Error('Division durch 0');
+            }
+            v = op === '*' ? v * rhs : v / rhs;
+        }
+        return v;
+    }
+
+    function parseAdditive() {
+        let v = parseMultiplicative();
+        while (peek() && peek().type === 'op' && (peek().value === '+' || peek().value === '-')) {
+            const op = next().value;
+            const rhs = parseMultiplicative();
+            v = op === '+' ? v + rhs : v - rhs;
+        }
+        return v;
+    }
+
+    function parseComparison() {
+        const lhs = parseAdditive();
+        const t = peek();
+        if (t && t.type === 'op' && ['>', '<', '>=', '<=', '==', '!='].includes(t.value)) {
+            const op = next().value;
+            const rhs = parseAdditive();
+            if (op === '>') {
+                return lhs > rhs;
+            }
+            if (op === '<') {
+                return lhs < rhs;
+            }
+            if (op === '>=') {
+                return lhs >= rhs;
+            }
+            if (op === '<=') {
+                return lhs <= rhs;
+            }
+            if (op === '==') {
+                return lhs === rhs;
+            }
+            return lhs !== rhs;
+        }
+        return lhs;
+    }
+
+    // Ein Zweig nach "?" oder ":" ist entweder ein 'string'-Literal oder -
+    // für Verkettungen wie "wenn X dann A, sonst wenn Y dann B, sonst C" -
+    // wieder ein vollständiger (verschachtelter) Ternary-Ausdruck.
+    function parseTernaryBranch() {
+        if (peek() && peek().type === 'string') {
+            return next().value;
+        }
+        return parseTernary();
+    }
+
+    function parseTernary() {
+        const cond = parseComparison();
+        if (peek() && peek().type === 'op' && peek().value === '?') {
+            next();
+            const whenTrue = parseTernaryBranch();
+            if (!peek() || peek().value !== ':') {
+                throw new Error(': erwartet');
+            }
+            next();
+            const whenFalse = parseTernaryBranch();
+            return cond ? whenTrue : whenFalse;
+        }
+        return cond;
+    }
+
+    try {
+        const result = parseTernary();
+        if (pos < tokens.length) {
+            return null;
+        } // Reste übrig -> ungültige Syntax
+        return result;
+    } catch {
         return null;
     }
-    let result = n;
-    for (const [op, num] of ops) {
-        if (op === '+') {
-            result += num;
-        } else if (op === '-') {
-            result -= num;
-        } else if (op === '*') {
-            result *= num;
-        } else if (op === '/') {
-            result = num !== 0 ? result / num : result;
-        }
-    }
-    return Math.round(result);
 }
 
 async function resolveTemplate(adapter, text) {
@@ -152,31 +271,41 @@ async function resolveTemplate(adapter, text) {
 
     const settings = await getGlobalPlaceholderSettings(adapter);
     const matches = [...text.matchAll(PLACEHOLDER_RE)];
-    const parsed = matches.map(m => parsePlaceholder(m[1]));
+    const tokenized = matches.map(m => tokenize(m[1]));
     const values = {};
 
-    for (const id of [...new Set(parsed.map(p => p.id))]) {
+    const allIds = new Set();
+    for (const tokens of tokenized) {
+        for (const id of collectIds(tokens)) {
+            allIds.add(id);
+        }
+    }
+    for (const id of allIds) {
         try {
             const state = await adapter.getForeignStateAsync(id);
-            values[id] = state && state.val !== null && state.val !== undefined ? state.val : '–';
+            values[id] = state && state.val !== null && state.val !== undefined ? state.val : undefined;
         } catch {
-            values[id] = '–';
+            values[id] = undefined;
         }
     }
 
     let i = 0;
     return text.replace(PLACEHOLDER_RE, () => {
-        const { id, ops } = parsed[i++];
-        const raw = values[id] ?? '–';
+        const tokens = tokenized[i++];
 
-        if (ops.length > 0) {
-            const computed = applyPlaceholderMath(raw, ops);
-            if (computed !== null) {
-                return String(computed);
-            }
+        // Genau ein einzelnes id-Token, keine Operatoren -> unverändertes
+        // altes Verhalten (Bool-/Datums-Formatierung), damit bestehende
+        // Templates exakt gleich bleiben.
+        if (tokens.length === 1 && tokens[0].type === 'id') {
+            const raw = values[tokens[0].value];
+            return formatPlaceholderValue(raw === undefined ? '–' : raw, settings);
         }
 
-        return formatPlaceholderValue(raw, settings);
+        const result = evaluateExpression(tokens, values);
+        if (result === null) {
+            return '–';
+        }
+        return typeof result === 'number' ? String(Math.round(result)) : String(result);
     });
 }
 
