@@ -5,9 +5,9 @@ const path = require('node:path');
 
 // Erwartetes Modul-Interface (siehe modules/example.js):
 //   module.exports = {
-//     id: 'dieter',
-//     cmdPrefixes: ['TG:DIETER', 'TG:NAV:DIETER'],
-//     notifyAreas: { dieter: ['error'] },
+//     id: 'myModule',
+//     cmdPrefixes: ['TG:MYMODULE', 'TG:NAV:MYMODULE'],
+//     notifyAreas: { myModule: ['error'] },
 //     groupableAreas: [],                 // optional
 //     onCommand(cmd, value, ctx) {...},   // ctx: siehe core/base.js buildContext()
 //     init(adapter) {...}                 // optional, einmalig beim Laden
