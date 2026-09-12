@@ -57,7 +57,7 @@
       "uk": "Автономна система меню Telegram: маршрутизатор, рушій сповіщень, права користувачів та підключувані модулі.",
       "zh-cn": "独立的 Telegram 菜单系统：路由器、通知引擎、用户权限及可插拔的领域模块。"
     },
-    "authors": ["Henrik"],
+    "authors": ["Henrik <henrik.schoenhofen@icloud.com>"],
     "platform": "Javascript/Node.js",
     "mode": "daemon",
     "type": "communication",

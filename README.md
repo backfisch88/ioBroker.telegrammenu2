@@ -173,7 +173,7 @@ Older entries: see [CHANGELOG_OLD.md](CHANGELOG_OLD.md).
 
 MIT License
 
-Copyright (c) 2026 backfisch88
+Copyright (c) 2026 backfisch88 <henrik.schoenhofen@icloud.com>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
