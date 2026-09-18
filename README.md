@@ -139,7 +139,7 @@ No registration call needed — just set the script's ID and the command string 
 ## Requirements
 
 - Node.js >= 22 (uses the built-in `fetch` for the HTTP-request buttons)
-- js-controller >= 5.0.0
+- js-controller >= 6.0.11
 - An existing, configured `iobroker.telegram` instance
 
 ## Changelog
