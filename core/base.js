@@ -350,8 +350,16 @@ function createRouter(adapter) {
         // data:image/...;base64,XXXX ODER reines Base64 ohne Prefix
         const base64Data = source.includes(',') ? source.split(',')[1] : source;
         const buffer = Buffer.from(base64Data, 'base64');
-        const filePath = path.join(os.tmpdir(), `telegrammenu2_${Date.now()}.jpg`);
+        const filePath = path.join(
+            os.tmpdir(),
+            `telegrammenu2_${Date.now()}_${Math.random().toString(36).slice(2)}.jpg`,
+        );
         fs.writeFileSync(filePath, buffer);
+        // Eindeutige Datei pro Aufruf (kein Überschreiben - sonst Race Condition,
+        // falls zwei Nutzer gleichzeitig ein Bild anfordern). Stattdessen verzögert
+        // aufräumen: 60s reichen telegram.0 reichlich, um die Datei zu lesen, bevor
+        // sie gelöscht wird - so sammelt sich in /tmp nichts mehr an.
+        adapter.setTimeout(() => fs.unlink(filePath, () => {}), 60000);
         return filePath;
     }
 
@@ -944,11 +952,19 @@ function createRouter(adapter) {
             }
 
             try {
-                const resp = await fetch(button.httpUrl, {
-                    method,
-                    headers,
-                    body: button.httpBody && method !== 'GET' ? button.httpBody : undefined,
-                });
+                const controller = new AbortController();
+                const timeoutId = adapter.setTimeout(() => controller.abort(), 15000);
+                let resp;
+                try {
+                    resp = await fetch(button.httpUrl, {
+                        method,
+                        headers,
+                        body: button.httpBody && method !== 'GET' ? button.httpBody : undefined,
+                        signal: controller.signal,
+                    });
+                } finally {
+                    adapter.clearTimeout(timeoutId);
+                }
                 const bodyText = await resp.text().catch(() => '');
                 const truncated = bodyText.length > 300 ? `${bodyText.slice(0, 300)}…` : bodyText;
 

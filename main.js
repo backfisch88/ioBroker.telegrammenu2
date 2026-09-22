@@ -173,7 +173,7 @@ class TelegramMenu2 extends utils.Adapter {
                 if (obj.callback) {
                     this.sendTo(obj.from, obj.command, { ok: true }, obj.callback);
                 }
-            })();
+            })().catch(e => this.log.error(`Unbehandelter Fehler im Message-Handler: ${e.message}`));
             return;
         }
 
@@ -184,7 +184,7 @@ class TelegramMenu2 extends utils.Adapter {
                 if (obj.callback) {
                     this.sendTo(obj.from, obj.command, { ok: true }, obj.callback);
                 }
-            })();
+            })().catch(e => this.log.error(`Unbehandelter Fehler im Message-Handler: ${e.message}`));
             return;
         }
 
@@ -220,7 +220,7 @@ class TelegramMenu2 extends utils.Adapter {
                 if (obj.callback) {
                     this.sendTo(obj.from, obj.command, { ok: true }, obj.callback);
                 }
-            })();
+            })().catch(e => this.log.error(`Unbehandelter Fehler im Message-Handler: ${e.message}`));
             return;
         }
 
@@ -323,7 +323,7 @@ class TelegramMenu2 extends utils.Adapter {
                 if (obj.callback) {
                     this.sendTo(obj.from, obj.command, { ok: true }, obj.callback);
                 }
-            })();
+            })().catch(e => this.log.error(`Unbehandelter Fehler im Message-Handler: ${e.message}`));
             return;
         }
 
@@ -339,7 +339,7 @@ class TelegramMenu2 extends utils.Adapter {
                 if (obj.callback) {
                     this.sendTo(obj.from, obj.command, { ok: true, layout }, obj.callback);
                 }
-            })();
+            })().catch(e => this.log.error(`Unbehandelter Fehler im Message-Handler: ${e.message}`));
             return;
         }
 
@@ -355,7 +355,7 @@ class TelegramMenu2 extends utils.Adapter {
                 if (obj.callback) {
                     this.sendTo(obj.from, obj.command, { ok: true, removed }, obj.callback);
                 }
-            })();
+            })().catch(e => this.log.error(`Unbehandelter Fehler im Message-Handler: ${e.message}`));
             return;
         }
 
@@ -399,7 +399,7 @@ class TelegramMenu2 extends utils.Adapter {
                         this.sendTo(obj.from, obj.command, { ok: false, error: e.message }, obj.callback);
                     }
                 }
-            })();
+            })().catch(e => this.log.error(`Unbehandelter Fehler im Message-Handler: ${e.message}`));
             return;
         }
 
@@ -431,7 +431,7 @@ class TelegramMenu2 extends utils.Adapter {
                 if (obj.callback) {
                     this.sendTo(obj.from, obj.command, { ok }, obj.callback);
                 }
-            })();
+            })().catch(e => this.log.error(`Unbehandelter Fehler im Message-Handler: ${e.message}`));
             return;
         }
 
@@ -444,7 +444,7 @@ class TelegramMenu2 extends utils.Adapter {
                 if (obj.callback) {
                     this.sendTo(obj.from, obj.command, { ok: true }, obj.callback);
                 }
-            })();
+            })().catch(e => this.log.error(`Unbehandelter Fehler im Message-Handler: ${e.message}`));
             return;
         }
 
@@ -468,7 +468,7 @@ class TelegramMenu2 extends utils.Adapter {
                 if (obj.callback) {
                     this.sendTo(obj.from, obj.command, { ok }, obj.callback);
                 }
-            })();
+            })().catch(e => this.log.error(`Unbehandelter Fehler im Message-Handler: ${e.message}`));
             return;
         }
 
@@ -481,7 +481,7 @@ class TelegramMenu2 extends utils.Adapter {
                 if (obj.callback) {
                     this.sendTo(obj.from, obj.command, { ok: true }, obj.callback);
                 }
-            })();
+            })().catch(e => this.log.error(`Unbehandelter Fehler im Message-Handler: ${e.message}`));
             return;
         }
 
@@ -494,7 +494,7 @@ class TelegramMenu2 extends utils.Adapter {
                 if (obj.callback) {
                     this.sendTo(obj.from, obj.command, { ok: true }, obj.callback);
                 }
-            })();
+            })().catch(e => this.log.error(`Unbehandelter Fehler im Message-Handler: ${e.message}`));
             return;
         }
 
