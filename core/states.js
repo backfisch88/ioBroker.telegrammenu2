@@ -147,4 +147,52 @@ async function migrateChannelObjects(adapter) {
     }
 }
 
-module.exports = { ensureCoreStates, ensureDynamicState, ensureChannelPath, migrateChannelObjects, CORE_STATES };
+// One-time migration for installations where a CORE_STATES entry's metadata
+// (role/name/unit/write) was changed in a later adapter version - e.g. the
+// cmd.ts/render.ts role: 'value' -> 'value.time' + unit: 'ms' fix, or the
+// write: true -> false fix for cmd.id/cmd.value. ensureCoreStates() alone
+// can't apply these to already-existing objects, since setObjectNotExistsAsync
+// is a no-op once the object exists. Safe to run on every start: it's a
+// no-op once every state's metadata already matches CORE_STATES.
+async function migrateCoreStateMetadata(adapter) {
+    let fixed = 0;
+    for (const s of CORE_STATES) {
+        const existing = await adapter.getObjectAsync(s.id);
+        if (!existing || !existing.common) {
+            continue;
+        }
+        const wantWrite = s.write === undefined ? true : s.write;
+        const wantName = s.name || s.id;
+        const patch = {};
+        if (existing.common.role !== s.role) {
+            patch.role = s.role;
+        }
+        if (existing.common.name !== wantName) {
+            patch.name = wantName;
+        }
+        if (s.unit && existing.common.unit !== s.unit) {
+            patch.unit = s.unit;
+        }
+        if (existing.common.write !== wantWrite) {
+            patch.write = wantWrite;
+        }
+        if (Object.keys(patch).length) {
+            await adapter.extendObjectAsync(s.id, { common: patch });
+            fixed++;
+        }
+    }
+    if (fixed) {
+        adapter.log.info(
+            `Object migration: ${fixed} core state(s) had their metadata (role/name/unit/write) corrected.`,
+        );
+    }
+}
+
+module.exports = {
+    ensureCoreStates,
+    ensureDynamicState,
+    ensureChannelPath,
+    migrateChannelObjects,
+    migrateCoreStateMetadata,
+    CORE_STATES,
+};

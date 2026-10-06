@@ -2539,6 +2539,50 @@ async function run() {
         );
     }
 
+    // --- Core-State-Metadaten-Migration: simuliert eine bestehende
+    // Installation von VOR dem role/name/write-Fix (cmd.ts mit altem role:
+    // "value", kein unit, name=ID statt lesbarem Text; cmd.id mit write:
+    // true). setObjectNotExistsAsync allein würde diese bestehenden Objekte
+    // nie anfassen - migrateCoreStateMetadata muss das nachziehen.
+    await fakeAdapter.setObjectNotExistsAsync('cmd.ts', {
+        type: 'state',
+        common: { name: 'cmd.ts', type: 'number', role: 'value', read: true, write: true },
+        native: {},
+    });
+    await fakeAdapter.setStateAsync('cmd.ts', { val: 1234567890, ack: true });
+    await fakeAdapter.setObjectNotExistsAsync('cmd.id', {
+        type: 'state',
+        common: { name: 'cmd.id', type: 'string', role: 'text', read: true, write: true },
+        native: {},
+    });
+    const { migrateCoreStateMetadata } = require('../core/states');
+    await migrateCoreStateMetadata(fakeAdapter);
+
+    const migratedCmdTs = await fakeAdapter.getObjectAsync('cmd.ts');
+    const migratedCmdId = await fakeAdapter.getObjectAsync('cmd.id');
+    const migratedCmdTsValue = await fakeAdapter.getStateAsync('cmd.ts');
+    console.log('--- Core-State-Migration: cmd.ts role/unit/name korrigiert? ---', {
+        role: migratedCmdTs?.common?.role,
+        unit: migratedCmdTs?.common?.unit,
+        name: migratedCmdTs?.common?.name,
+    });
+    if (migratedCmdTs?.common?.role !== 'value.time' || migratedCmdTs?.common?.unit !== 'ms') {
+        throw new Error(
+            'Core-State-Migration hat die role/unit-Korrektur auf einem bestehenden "cmd.ts" nicht nachgezogen!',
+        );
+    }
+    console.log('--- Core-State-Migration: cmd.id write-Flag korrigiert? ---', migratedCmdId?.common?.write);
+    if (migratedCmdId?.common?.write !== false) {
+        throw new Error('Core-State-Migration hat write:false bei einem bestehenden "cmd.id" nicht nachgezogen!');
+    }
+    console.log(
+        '--- Core-State-Migration: Wert dabei unangetastet? (muss 1234567890 bleiben) ---',
+        migratedCmdTsValue?.val,
+    );
+    if (migratedCmdTsValue?.val !== 1234567890) {
+        throw new Error('Core-State-Migration hat versehentlich den gespeicherten Wert verändert!');
+    }
+
     console.log('\n✅ Smoke-Test durchgelaufen ohne Exception.');
 }
 
