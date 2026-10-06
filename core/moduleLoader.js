@@ -26,7 +26,7 @@ async function loadModules(adapter) {
         try {
             const mod = require(path.join(dir, file));
             if (!mod || !mod.id || typeof mod.onCommand !== 'function') {
-                adapter.log.warn(`Modul ${file} hat kein gültiges Interface (id/onCommand fehlt) – übersprungen`);
+                adapter.log.warn(`Module ${file} has no valid interface (id/onCommand missing) - skipped`);
                 continue;
             }
 
@@ -39,9 +39,9 @@ async function loadModules(adapter) {
             }
 
             loaded.push(mod);
-            adapter.log.debug(`Modul geladen: ${mod.id} (${(mod.cmdPrefixes || []).join(', ')})`);
+            adapter.log.debug(`Module loaded: ${mod.id} (${(mod.cmdPrefixes || []).join(', ')})`);
         } catch (e) {
-            adapter.log.error(`Modul ${file} konnte nicht geladen werden: ${e.message}`);
+            adapter.log.error(`Module ${file} could not be loaded: ${e.message}`);
         }
     }
 

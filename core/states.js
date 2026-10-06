@@ -4,22 +4,22 @@
 // statt 0_userdata.0.telegramMenu2.* States des JavaScript-Adapters.
 
 const CORE_STATES = [
-    { id: 'runtime.lastChatId', def: '', role: 'text' },
-    { id: 'runtime.lastUserKey', def: '', role: 'text' },
-    { id: 'runtime.currentMenu', def: 'main', role: 'text' },
-    { id: 'runtime.historyJson', def: '[]', role: 'json' },
-    { id: 'runtime.inputMode', def: '', role: 'text' },
-    { id: 'runtime.inputContext', def: '', role: 'text' },
-    { id: 'runtime.confirmAction', def: '', role: 'text' },
-    { id: 'runtime.confirmPayload', def: '', role: 'text' },
+    { id: 'runtime.lastChatId', def: '', role: 'text', name: 'Last Telegram chat ID' },
+    { id: 'runtime.lastUserKey', def: '', role: 'text', name: 'Last user key' },
+    { id: 'runtime.currentMenu', def: 'main', role: 'text', name: 'Currently active menu' },
+    { id: 'runtime.historyJson', def: '[]', role: 'json', name: 'Menu navigation history (JSON)' },
+    { id: 'runtime.inputMode', def: '', role: 'text', name: 'Current text input mode' },
+    { id: 'runtime.inputContext', def: '', role: 'text', name: 'Current text input context' },
+    { id: 'runtime.confirmAction', def: '', role: 'text', name: 'Pending confirmation action' },
+    { id: 'runtime.confirmPayload', def: '', role: 'text', name: 'Pending confirmation payload' },
 
-    { id: 'cmd.id', def: '', role: 'text' },
-    { id: 'cmd.value', def: '', role: 'text' },
-    { id: 'cmd.ts', def: 0, role: 'value', write: false },
+    { id: 'cmd.id', def: '', role: 'text', name: 'Last dispatched command ID', write: false },
+    { id: 'cmd.value', def: '', role: 'text', name: 'Last dispatched command value', write: false },
+    { id: 'cmd.ts', def: 0, role: 'value.time', unit: 'ms', name: 'Last dispatched command timestamp', write: false },
 
-    { id: 'render.menuKey', def: '', role: 'text' },
-    { id: 'render.text', def: '', role: 'text' },
-    { id: 'render.ts', def: 0, role: 'value', write: false },
+    { id: 'render.menuKey', def: '', role: 'text', name: 'Last rendered menu key' },
+    { id: 'render.text', def: '', role: 'text', name: 'Last rendered message text' },
+    { id: 'render.ts', def: 0, role: 'value.time', unit: 'ms', name: 'Last rendered menu timestamp', write: false },
 ];
 
 // Roles that ioBroker's state-role convention (see stateroles.md) requires
@@ -50,17 +50,17 @@ async function ensureChannelPath(adapter, id) {
 async function ensureCoreStates(adapter) {
     for (const s of CORE_STATES) {
         await ensureChannelPath(adapter, s.id);
-        await adapter.setObjectNotExistsAsync(s.id, {
-            type: 'state',
-            common: {
-                name: s.id,
-                type: typeof s.def === 'number' ? 'number' : 'string',
-                role: s.role,
-                read: true,
-                write: s.write === undefined ? true : s.write,
-            },
-            native: {},
-        });
+        const common = {
+            name: s.name || s.id,
+            type: typeof s.def === 'number' ? 'number' : 'string',
+            role: s.role,
+            read: true,
+            write: s.write === undefined ? true : s.write,
+        };
+        if (s.unit) {
+            common.unit = s.unit;
+        }
+        await adapter.setObjectNotExistsAsync(s.id, { type: 'state', common, native: {} });
         const current = await adapter.getStateAsync(s.id);
         if (!current) {
             await adapter.setStateAsync(s.id, { val: s.def, ack: true });
@@ -74,10 +74,13 @@ async function ensureDynamicState(adapter, id, def, role = 'state') {
     const exists = await adapter.getObjectAsync(id);
     if (!exists) {
         await ensureChannelPath(adapter, id);
+        // Letztes ID-Segment als Anzeigename statt der vollen, verschachtelten ID -
+        // z. B. "Wäsche" statt "users.henrik123.permissions.Wäsche".
+        const lastSegment = id.split('.').pop();
         await adapter.setObjectNotExistsAsync(id, {
             type: 'state',
             common: {
-                name: id,
+                name: lastSegment,
                 type: typeof def === 'number' ? 'number' : typeof def === 'boolean' ? 'boolean' : 'string',
                 role,
                 read: true,
@@ -103,7 +106,7 @@ async function migrateChannelObjects(adapter) {
     try {
         allObjects = await adapter.getAdapterObjectsAsync();
     } catch (e) {
-        adapter.log.warn(`Objekt-Migration übersprungen: ${e.message}`);
+        adapter.log.warn(`Object migration skipped: ${e.message}`);
         return;
     }
 
@@ -139,7 +142,7 @@ async function migrateChannelObjects(adapter) {
 
     if (channelsCreated || writeFlagsFixed) {
         adapter.log.info(
-            `Objekt-Migration: ${channelsCreated} fehlende(s) Zwischenobjekt(e) ergänzt, ${writeFlagsFixed} write-Flag(s) korrigiert.`,
+            `Object migration: ${channelsCreated} missing intermediate object(s) added, ${writeFlagsFixed} write flag(s) corrected.`,
         );
     }
 }

@@ -3,6 +3,7 @@
 const { getMenu } = require('./registry');
 const { hasPermission } = require('./users');
 const { resolveTemplate } = require('./template');
+const { t } = require('./botI18n');
 
 // Behandelt Tastendrücke aus den vordefinierten Wert-Submenüs
 // (source: 'percentRange' / 'numberRange' in autoMenus.js), die als
@@ -20,7 +21,7 @@ async function buildConfirmText(adapter, menuDef, value) {
         const withPlaceholders = menuDef.confirmMessage.replace(/\{value\}/g, String(value)).replace(/\{unit\}/g, unit);
         return resolveTemplate(adapter, withPlaceholders);
     }
-    return `✅ ${value}${unit} gesetzt.`;
+    return t('bot.valueSetConfirm', { value, unit });
 }
 
 async function handleValueSetCommand(adapter, cmd, user, userKey, renderMenu) {
@@ -31,7 +32,7 @@ async function handleValueSetCommand(adapter, cmd, user, userKey, renderMenu) {
     const rest = cmd.slice('TG:VALSET:'.length);
     const sepIdx = rest.lastIndexOf('|');
     if (sepIdx === -1) {
-        adapter.log.warn(`TG:VALSET: ungültiges Format (kein "|" gefunden): ${cmd}`);
+        adapter.log.warn(`TG:VALSET: invalid format (no "|" found): ${cmd}`);
         return true;
     }
 
@@ -43,7 +44,7 @@ async function handleValueSetCommand(adapter, cmd, user, userKey, renderMenu) {
     const datapoint = menuDef && menuDef.datapoint;
 
     if (!datapoint || isNaN(value)) {
-        adapter.log.warn(`TG:VALSET: ungültiges Menü/Wert: "${cmd}"`);
+        adapter.log.warn(`TG:VALSET: invalid menu/value: "${cmd}"`);
         return true;
     }
 
@@ -58,7 +59,7 @@ async function handleValueSetCommand(adapter, cmd, user, userKey, renderMenu) {
     try {
         await adapter.setForeignStateAsync(datapoint, { val: value, ack: false });
     } catch (e) {
-        adapter.log.warn(`TG:VALSET: Schreiben auf ${datapoint} fehlgeschlagen: ${e.message}`);
+        adapter.log.warn(`TG:VALSET: writing to ${datapoint} failed: ${e.message}`);
     }
 
     // Statt das Inline-Menü erneut zu zeigen, direkt zurück ins Elternmenü mit
@@ -79,7 +80,7 @@ async function handleValueCustomCommand(adapter, cmd, user, userKey, startNumpad
     const menuDef = await getMenu(adapter, menuKey);
 
     if (!menuDef || !menuDef.datapoint) {
-        adapter.log.warn(`TG:VALCUSTOM: Menü/Datenpunkt nicht gefunden: "${cmd}"`);
+        adapter.log.warn(`TG:VALCUSTOM: menu/datapoint not found: "${cmd}"`);
         return true;
     }
 
@@ -103,7 +104,7 @@ async function handleValueCustomCommand(adapter, cmd, user, userKey, startNumpad
         min: menuDef.min,
         max: menuDef.max,
         menuKey: menuDef.parent || 'main',
-        prompt: `Bitte Wert eingeben${unit ? ` (${unit})` : ''}:`,
+        prompt: t('bot.enterValuePrompt', { unitSuffix: unit ? ` (${unit})` : '' }),
         message,
     });
 

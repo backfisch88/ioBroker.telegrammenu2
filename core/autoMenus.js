@@ -3,6 +3,7 @@
 const { listUsers, isAdmin } = require('./users');
 const { permLabel } = require('./permLabels');
 const { getMenu } = require('./registry');
+const { t } = require('./botI18n');
 
 // Fasst eine flache Button-Liste zu Reihen zusammen (Breite konfigurierbar
 // über die globale Einstellung "Buttons pro Zeile" am Hauptmenü-Knoten,
@@ -26,8 +27,8 @@ async function getGlobalButtonsPerRow(adapter) {
 }
 
 const BACK_MAIN_ROW = [
-    { text: '⬅️ Zurück', cmd: 'TG:NAV:BACK' },
-    { text: '🏠 Hauptmenü', cmd: 'TG:NAV:MAIN' },
+    { text: t('bot.back'), cmd: 'TG:NAV:BACK' },
+    { text: t('bot.mainMenu'), cmd: 'TG:NAV:MAIN' },
 ];
 
 // Baut zur Laufzeit die Buttons für ein Auto-Menü aus dem Editor
@@ -90,7 +91,7 @@ async function buildNumberRangeRows(adapter, menuDef, menuKey) {
 
 async function buildValueRangeRows(adapter, datapoint, min, max, step, unit, rowLength, menuKey) {
     if (!datapoint) {
-        return [[{ text: '⚠️ Kein Datenpunkt konfiguriert', cmd: 'TG:NAV:BACK' }]];
+        return [[{ text: t('bot.noDatapointConfigured'), cmd: 'TG:NAV:BACK' }]];
     }
 
     let current = null;
@@ -130,7 +131,7 @@ async function buildValueRangeRows(adapter, datapoint, min, max, step, unit, row
     if (!rows.length) {
         rows.push([{ text: '⚠️ Kein Wertebereich konfiguriert', cmd: 'TG:NAV:BACK' }]);
     }
-    rows.push([{ text: '✏️ Eigener Wert', cmd: `TG:VALCUSTOM:${menuKey}` }]);
+    rows.push([{ text: t('bot.customValue'), cmd: `TG:VALCUSTOM:${menuKey}` }]);
     return rows;
 }
 
@@ -219,7 +220,7 @@ async function buildNotifyPrefRows(adapter, userKey, buttonsPerRow) {
 
     const rows = chunkButtons(buttons, buttonsPerRow);
     if (!rows.length) {
-        rows.push([{ text: 'Keine Benachrichtigungsbereiche verfügbar', cmd: 'TG:NAV:BACK' }]);
+        rows.push([{ text: t('bot.noNotifyAreas'), cmd: 'TG:NAV:BACK' }]);
     }
     rows.push([{ text: '⏸ Pausieren', cmd: 'TG:NAV:SETTINGS:NOTIFY:PAUSE', nextMenu: 'settings_notify_pause' }]);
     rows.push(BACK_MAIN_ROW);
@@ -244,7 +245,7 @@ async function buildNotifyPauseRows(adapter, userKey, buttonsPerRow) {
 
     const rows = chunkButtons(buttons, buttonsPerRow);
     if (!rows.length) {
-        rows.push([{ text: 'Keine Bereiche verfügbar', cmd: 'TG:NAV:BACK' }]);
+        rows.push([{ text: t('bot.noAreas'), cmd: 'TG:NAV:BACK' }]);
     }
     rows.push(BACK_MAIN_ROW);
     return rows;

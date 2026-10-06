@@ -42,7 +42,7 @@ function createScriptBridge(adapter) {
                 handlers[prefix] = typeof entry === 'string' ? { scriptId: entry, perm: '' } : entry;
             }
         } catch (e) {
-            adapter.log.warn(`scriptBridge: ${SCRIPTS_STATE} konnte nicht gelesen werden: ${e.message}`);
+            adapter.log.warn(`scriptBridge: could not read ${SCRIPTS_STATE}: ${e.message}`);
         }
     }
 
@@ -52,7 +52,9 @@ function createScriptBridge(adapter) {
     async function register(cmdPrefix, scriptId, perm = '') {
         handlers[cmdPrefix] = { scriptId, perm };
         await persist();
-        adapter.log.info(`scriptBridge: "${cmdPrefix}" -> ${scriptId}${perm ? ` (Recht: ${perm})` : ''} registriert`);
+        adapter.log.info(
+            `scriptBridge: "${cmdPrefix}" -> ${scriptId}${perm ? ` (permission: ${perm})` : ''} registered`,
+        );
     }
 
     async function unregister(cmdPrefix) {
@@ -77,7 +79,7 @@ function createScriptBridge(adapter) {
                 if (!settled) {
                     settled = true;
                     adapter.log.warn(
-                        `scriptBridge: ${fullScriptId} hat auf "${cmd}" nicht innerhalb von ${CALL_TIMEOUT_MS}ms geantwortet`,
+                        `scriptBridge: ${fullScriptId} did not respond to "${cmd}" within ${CALL_TIMEOUT_MS}ms`,
                     );
                     resolve(null);
                 }

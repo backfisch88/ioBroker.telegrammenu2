@@ -1,6 +1,7 @@
 'use strict';
 
 const { getMenu } = require('./registry');
+const { t } = require('./botI18n');
 
 const PLACEHOLDER_RE = /\{\{([^}]+)\}\}/g;
 const DATE_ONLY_RE = /^(\d{4}-\d{2}-\d{2})$/;
@@ -57,8 +58,8 @@ async function getGlobalPlaceholderSettings(adapter) {
         const mainDef = await getMenu(adapter, 'main');
         return {
             boolEnabled: mainDef?.boolTranslateEnabled !== false,
-            trueText: mainDef?.boolTrueText || '✅ an',
-            falseText: mainDef?.boolFalseText || '⛔ aus',
+            trueText: mainDef?.boolTrueText || t('bot.boolTrue'),
+            falseText: mainDef?.boolFalseText || t('bot.boolFalse'),
             dateEnabled: mainDef?.dateTranslateEnabled !== false,
             dateFormat: mainDef?.dateFormat || 'DD.MM.YYYY',
             dateTimeFormat: mainDef?.dateTimeFormat || 'DD.MM.YYYY HH:mm',
@@ -66,8 +67,8 @@ async function getGlobalPlaceholderSettings(adapter) {
     } catch {
         return {
             boolEnabled: true,
-            trueText: '✅ an',
-            falseText: '⛔ aus',
+            trueText: t('bot.boolTrue'),
+            falseText: t('bot.boolFalse'),
             dateEnabled: true,
             dateFormat: 'DD.MM.YYYY',
             dateTimeFormat: 'DD.MM.YYYY HH:mm',
@@ -154,7 +155,7 @@ function evaluateExpression(tokens, values) {
             next();
             const v = parseComparison();
             if (!peek() || peek().value !== ')') {
-                throw new Error('schließende Klammer fehlt');
+                throw new Error(t('bot.missingClosingParen'));
             }
             next();
             return v;

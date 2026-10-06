@@ -512,8 +512,8 @@ async function run() {
         '| inline_keyboard? ---',
         !!afterSetMsg?.payload?.reply_markup?.inline_keyboard,
     );
-    if (afterSetMsg?.payload?.text !== '✅ 60% gesetzt.') {
-        throw new Error('TG:VALSET: Standard-Bestätigungstext ("✅ 60% gesetzt.") stimmt nicht!');
+    if (afterSetMsg?.payload?.text !== '✅ 60% set.') {
+        throw new Error('TG:VALSET: Standard-Bestätigungstext ("✅ 60% set.") stimmt nicht!');
     }
     if (afterSetMsg?.payload?.reply_markup?.inline_keyboard) {
         throw new Error('TG:VALSET: Bestätigung landet fälschlich wieder im Inline-Menü statt im Elternmenü (main)!');
@@ -611,7 +611,7 @@ async function run() {
         await fakeAdapter.router.handleIncoming(`[123456] ${digit}`);
     }
     sentMessages.length = 0;
-    await fakeAdapter.router.handleIncoming('[123456] ✅ Fertig');
+    await fakeAdapter.router.handleIncoming('[123456] ✅ Done');
     const rolloStateAfterNumpad = await fakeAdapter.getForeignStateAsync('0_userdata.0.TestRollo');
     console.log('--- TG:VALCUSTOM: Datenpunkt nach Ziffernblock-Eingabe "35" ---', rolloStateAfterNumpad?.val);
     if (rolloStateAfterNumpad?.val !== 35) {
@@ -827,7 +827,7 @@ async function run() {
 
     // Außerhalb Min/Max -> EINE Fehlermeldung, Puffer wird komplett zurückgesetzt (von vorne)
     sentMessages.length = 0;
-    await fakeAdapter.router.handleIncoming('[123456] ✅ Fertig');
+    await fakeAdapter.router.handleIncoming('[123456] ✅ Done');
     console.log('--- Wert außerhalb Min/Max (Puffer wird zurückgesetzt) ---', sentMessages.at(-1)?.payload?.text);
     let dpState2 = await fakeAdapter.getForeignStateAsync('0_userdata.0.Zieltemp');
     if (dpState2) {
@@ -842,7 +842,7 @@ async function run() {
     await fakeAdapter.router.handleIncoming('[123456] 2');
     await fakeAdapter.router.handleIncoming('[123456] 0');
     sentMessages.length = 0;
-    await fakeAdapter.router.handleIncoming('[123456] ✅ Fertig');
+    await fakeAdapter.router.handleIncoming('[123456] ✅ Done');
     console.log('--- Gültiger Wert über Ziffernblock ---', sentMessages.at(-1)?.payload?.text);
     dpState2 = await fakeAdapter.getForeignStateAsync('0_userdata.0.Zieltemp');
     if (dpState2?.val !== 20) {
@@ -1415,7 +1415,7 @@ async function run() {
     sentMessages.length = 0;
     await fakeAdapter.router.handleIncoming('[999999] TG:ADMIN:APPROVEAREA:zweiterNeuerBereich');
     console.log('--- Nicht-Admin-Versuch ---', sentMessages.at(-1)?.payload?.text);
-    if (!sentMessages.at(-1)?.payload?.text?.includes('Nur Admins')) {
+    if (!sentMessages.at(-1)?.payload?.text?.includes('Only admins')) {
         throw new Error('Nicht-Admin konnte trotzdem freischalten!');
     }
     if (fakeAdapter.notify.getValidAreas().zweiterNeuerBereich) {
@@ -1567,7 +1567,7 @@ async function run() {
     if (!mainListTexts.some(t => t.includes('⏸ Pausieren'))) {
         throw new Error('Link zum Pause-Untermenü fehlt in der Hauptliste!');
     }
-    if (!mainListTexts.includes('⬅️ Zurück') || !mainListTexts.includes('🏠 Hauptmenü')) {
+    if (!mainListTexts.includes('⬅️ Back') || !mainListTexts.includes('🏠 Main Menu')) {
         throw new Error('Kombi-Button Zurück+Hauptmenü fehlt in der Hauptliste!');
     }
 
@@ -1578,7 +1578,7 @@ async function run() {
     if (!pausedTexts.some(t => t.includes('▶️') && t.includes('Pause aufheben'))) {
         throw new Error('Pause-Untermenü zeigt bei aktiver Pause nicht den "Pause aufheben"-Button!');
     }
-    if (!pausedTexts.includes('⬅️ Zurück') || !pausedTexts.includes('🏠 Hauptmenü')) {
+    if (!pausedTexts.includes('⬅️ Back') || !pausedTexts.includes('🏠 Main Menu')) {
         throw new Error('Kombi-Button Zurück+Hauptmenü fehlt im Pause-Untermenü!');
     }
 
@@ -1591,7 +1591,7 @@ async function run() {
         throw new Error('Benutzer-Liste hat eine Zeile mit mehr als 2 Buttons!');
     }
     const lastUserRow = userListRows.at(-1).map(b => b.text);
-    if (!lastUserRow.includes('⬅️ Zurück') || !lastUserRow.includes('🏠 Hauptmenü')) {
+    if (!lastUserRow.includes('⬅️ Back') || !lastUserRow.includes('🏠 Main Menu')) {
         throw new Error('Kombi-Button Zurück+Hauptmenü fehlt in der Benutzer-Liste!');
     }
 
@@ -1625,7 +1625,7 @@ async function run() {
     const userDetailDef = await getMenuForCombo(fakeAdapter, 'admin_user_detail');
     const lastDetailRow = (userDetailDef?.rows || []).at(-1).map(b => b.text);
     console.log('--- Benutzer-Detail letzte Zeile ---', lastDetailRow);
-    if (!lastDetailRow.includes('⬅️ Zurück') || !lastDetailRow.includes('🏠 Hauptmenü')) {
+    if (!lastDetailRow.includes('⬅️ Back') || !lastDetailRow.includes('🏠 Main Menu')) {
         throw new Error('Kombi-Button Zurück+Hauptmenü fehlt im Benutzer-Detail!');
     }
 
@@ -1688,8 +1688,8 @@ async function run() {
         rows: [
             [{ text: '🧼 Filter zurücksetzen', cmd: 'TG:VACUUM:RESET:FILTER' }],
             [
-                { text: '⬅️ Zurück', cmd: 'TG:NAV:BACK' },
-                { text: '🏠 Hauptmenü', cmd: 'TG:NAV:MAIN' },
+                { text: '⬅️ Back', cmd: 'TG:NAV:BACK' },
+                { text: '🏠 Main Menu', cmd: 'TG:NAV:MAIN' },
             ],
         ],
     });
@@ -1707,7 +1707,7 @@ async function run() {
     if (!maintMsg?.payload?.reply_markup?.keyboard?.flat().includes('🧼 Filter zurücksetzen')) {
         throw new Error('Menü-eigene Tastatur (Reset-Buttons) fehlt!');
     }
-    if (!maintMsg?.payload?.reply_markup?.keyboard?.flat().includes('🏠 Hauptmenü')) {
+    if (!maintMsg?.payload?.reply_markup?.keyboard?.flat().includes('🏠 Main Menu')) {
         throw new Error('Kombi-Button fehlt in der Menü-eigenen Tastatur!');
     }
 
@@ -1747,7 +1747,7 @@ async function run() {
     sentMessages.length = 0;
     await fakeAdapter.router.renderMenu('123456', 'main');
     console.log('--- Boolean-Platzhalter (true) ---', sentMessages.at(-1)?.payload?.text);
-    if (sentMessages.at(-1)?.payload?.text !== 'Status: ✅ an') {
+    if (sentMessages.at(-1)?.payload?.text !== 'Status: ✅ on') {
         throw new Error('Boolean "true" wurde nicht automatisch übersetzt!');
     }
 
@@ -1755,7 +1755,7 @@ async function run() {
     sentMessages.length = 0;
     await fakeAdapter.router.renderMenu('123456', 'main');
     console.log('--- Boolean-Platzhalter (false) ---', sentMessages.at(-1)?.payload?.text);
-    if (sentMessages.at(-1)?.payload?.text !== 'Status: ⛔ aus') {
+    if (sentMessages.at(-1)?.payload?.text !== 'Status: ⛔ off') {
         throw new Error('Boolean "false" wurde nicht automatisch übersetzt!');
     }
 
@@ -1924,7 +1924,7 @@ async function run() {
         parent: 'main',
         message: 'Letztes Bild von der Kamera',
         imageDatapoint: '0_userdata.0.KameraBild',
-        rows: [[{ text: '⬅️ Zurück', cmd: 'TG:NAV:BACK' }]],
+        rows: [[{ text: '⬅️ Back', cmd: 'TG:NAV:BACK' }]],
     });
     sentMessages.length = 0;
     await fakeAdapter.router.renderMenu('123456', 'kamera_menu');
@@ -1937,7 +1937,7 @@ async function run() {
     if (menuImgMsg?.payload?.caption !== 'Letztes Bild von der Kamera') {
         throw new Error('Menü-Antworttext wurde nicht als Bildunterschrift verwendet!');
     }
-    if (!menuImgMsg?.payload?.reply_markup?.keyboard?.flat().includes('⬅️ Zurück')) {
+    if (!menuImgMsg?.payload?.reply_markup?.keyboard?.flat().includes('⬅️ Back')) {
         throw new Error('Tastatur fehlt bei Bild+Menü-Nachricht!');
     }
     if (!menuImgMsg?.payload?.text?.endsWith('.jpg') || !fs.existsSync(menuImgMsg.payload.text)) {
@@ -2235,7 +2235,7 @@ async function run() {
     await fakeAdapter.router.renderMenu('123456', 'main');
     const boolStillWorksText = sentMessages.at(-1)?.payload?.text;
     console.log('--- Einzelner Datenpunkt: Bool-Formatierung weiterhin aktiv? ---', boolStillWorksText);
-    if (boolStillWorksText !== 'Status: ✅ an') {
+    if (boolStillWorksText !== 'Status: ✅ on') {
         throw new Error(
             `Einzel-Datenpunkt-Bool-Formatierung durch die neue Engine kaputt gegangen, war: "${boolStillWorksText}"`,
         );

@@ -3,6 +3,7 @@
 const { ensureDynamicState } = require('./states');
 const { listAdminChatIds } = require('./users');
 const { getMenu } = require('./registry');
+const { t } = require('./botI18n');
 
 const GROUP_WINDOW_MS = 15000;
 const AREAS_STATE = 'notify.areas';
@@ -77,7 +78,7 @@ function createNotifyEngine(adapter) {
                 }
             }
         } catch (e) {
-            adapter.log.warn(`notify: ${AREAS_STATE} konnte nicht gelesen werden: ${e.message}`);
+            adapter.log.warn(`notify: could not read ${AREAS_STATE}: ${e.message}`);
         }
     }
 
@@ -214,7 +215,7 @@ function createNotifyEngine(adapter) {
             }
             await adapter.sendToAsync(adapter.telegramInstance, payload);
         } catch (e) {
-            adapter.log.warn(`notify: Senden an ${userChatId} fehlgeschlagen: ${e.message}`);
+            adapter.log.warn(`notify: sending to ${userChatId} failed: ${e.message}`);
         }
     }
 
@@ -273,11 +274,14 @@ function createNotifyEngine(adapter) {
             if (!chatIds.length) {
                 return;
             }
-            const text = `🔔 Ein Adapter möchte Benachrichtigungen im Bereich "${area}"${type ? ` (Typ: ${type})` : ''} senden.\n\nErlauben?`;
+            const text = t('bot.newAreaRequest', {
+                area,
+                typeSuffix: type ? t('bot.newAreaTypeSuffix', { type }) : '',
+            });
             const keyboard = {
                 inline_keyboard: [
                     [
-                        { text: '✅ Erlauben', callback_data: `TG:ADMIN:APPROVEAREA:${area}` },
+                        { text: t('bot.allow'), callback_data: `TG:ADMIN:APPROVEAREA:${area}` },
                         { text: '❌ Nicht erlauben', callback_data: `TG:ADMIN:DENYAREA:${area}` },
                     ],
                 ],
@@ -286,7 +290,7 @@ function createNotifyEngine(adapter) {
                 await adapter.sendToAsync(adapter.telegramInstance, { text, user: chatId, reply_markup: keyboard });
             }
         } catch (e) {
-            adapter.log.warn(`notify: Admin-Benachrichtigung für neuen Bereich "${area}" fehlgeschlagen: ${e.message}`);
+            adapter.log.warn(`notify: admin notification for new area "${area}" failed: ${e.message}`);
         }
     }
 
@@ -345,9 +349,7 @@ function createNotifyEngine(adapter) {
         }
         if (changed) {
             if (!entry.approved) {
-                adapter.log.info(
-                    `notify: neuer Bereich "${area}" automatisch entdeckt, wartet auf Freischaltung (approveArea)`,
-                );
+                adapter.log.info(`notify: new area "${area}" auto-discovered, awaiting approval (approveArea)`);
             }
             await persist();
         }
@@ -359,7 +361,7 @@ function createNotifyEngine(adapter) {
         // "unsichtbar im Menü", sondern wirklich blockiert, bis approveArea()
         // aufgerufen wurde. So spammen Testnachrichten fremder Adapter niemanden voll.
         if (!entry.approved) {
-            adapter.log.debug(`notify: Bereich "${area}" noch nicht freigeschaltet - Nachricht verworfen`);
+            adapter.log.debug(`notify: area "${area}" not yet approved - message discarded`);
             return;
         }
 
@@ -367,7 +369,7 @@ function createNotifyEngine(adapter) {
         // Warnungen sollen nicht mitpausiert werden), alles andere wird verworfen.
         if (isAreaPaused(area) && type !== 'warn' && type !== 'error') {
             adapter.log.debug(
-                `notify: Bereich "${area}" pausiert bis ${new Date(entry.pausedUntil).toISOString()} - Nachricht verworfen`,
+                `notify: area "${area}" paused until ${new Date(entry.pausedUntil).toISOString()} - message discarded`,
             );
             return;
         }

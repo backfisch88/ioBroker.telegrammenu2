@@ -3,7 +3,8 @@
 const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
-const { getMenu } = require('./registry');
+const { getMenu, sanitizeMenuKey } = require('./registry');
+const { t } = require('./botI18n');
 const {
     ensureUser,
     userToKey,
@@ -45,11 +46,17 @@ const NUMPAD_ROWS = [
     ['4', '5', '6'],
     ['7', '8', '9'],
     ['.', '0', '⌫'],
-    ['✅ Fertig', '❌ Abbrechen'],
 ];
 
+// Als Funktion statt Modul-Konstante, da die letzte Zeile übersetzte Button-
+// Texte braucht - die Sprache steht erst nach initBotI18n() in onReady()
+// fest, also NACH dem require()-Zeitpunkt dieses Moduls.
+function getNumpadRows() {
+    return [...NUMPAD_ROWS, [t('bot.done'), t('bot.cancel')]];
+}
+
 function numpadPromptText(prompt, buffer) {
-    return `${prompt}\n\nEingabe: ${buffer || '_'}`;
+    return `${prompt}\n\n${t('bot.inputLabel')}: ${buffer || '_'}`;
 }
 
 function createRouter(adapter) {
@@ -102,7 +109,7 @@ function createRouter(adapter) {
         if (ctx.inputType === 'number') {
             const num = Number(String(rawText).replace(',', '.'));
             if (Number.isNaN(num)) {
-                await sendText(user, '⚠️ Das ist keine gültige Zahl. Bitte Button erneut antippen.');
+                await sendText(user, t('bot.invalidNumber'));
                 return;
             }
             if (ctx.min !== undefined && ctx.min !== '' && num < Number(ctx.min)) {
@@ -125,7 +132,7 @@ function createRouter(adapter) {
                 await sendText(user, confirmText);
             }
         } catch (e) {
-            adapter.log.warn(`Eingabe-Datenpunkt ${ctx.datapoint} fehlgeschlagen: ${e.message}`);
+            adapter.log.warn(`Input write to datapoint ${ctx.datapoint} failed: ${e.message}`);
             await sendText(user, `⚠️ Datenpunkt ${ctx.datapoint} konnte nicht geschrieben werden.`);
         }
     }
@@ -156,7 +163,7 @@ function createRouter(adapter) {
             return;
         }
 
-        if (key === '✅ Fertig') {
+        if (key === t('bot.done')) {
             const num = Number(String(ctx.buffer || '').replace(',', '.'));
             if (!ctx.buffer || Number.isNaN(num)) {
                 // Ungültig -> komplett zurücksetzen, von vorne beginnen (wie gewünscht).
@@ -164,7 +171,7 @@ function createRouter(adapter) {
                 await sendMenu(
                     user,
                     numpadPromptText(`⚠️ Ungültige Zahl, bitte neu eingeben. ${ctx.prompt || ''}`, ''),
-                    NUMPAD_ROWS,
+                    getNumpadRows(),
                 );
                 return;
             }
@@ -173,7 +180,7 @@ function createRouter(adapter) {
                 await sendMenu(
                     user,
                     numpadPromptText(`⚠️ Mindestens ${ctx.min}, bitte neu eingeben. ${ctx.prompt || ''}`, ''),
-                    NUMPAD_ROWS,
+                    getNumpadRows(),
                 );
                 return;
             }
@@ -182,7 +189,7 @@ function createRouter(adapter) {
                 await sendMenu(
                     user,
                     numpadPromptText(`⚠️ Höchstens ${ctx.max}, bitte neu eingeben. ${ctx.prompt || ''}`, ''),
-                    NUMPAD_ROWS,
+                    getNumpadRows(),
                 );
                 return;
             }
@@ -198,7 +205,7 @@ function createRouter(adapter) {
                     await sendText(user, confirmText);
                 }
             } catch (e) {
-                adapter.log.warn(`Eingabe-Datenpunkt ${ctx.datapoint} fehlgeschlagen: ${e.message}`);
+                adapter.log.warn(`Input write to datapoint ${ctx.datapoint} failed: ${e.message}`);
                 await sendText(user, `⚠️ Datenpunkt ${ctx.datapoint} konnte nicht geschrieben werden.`);
             }
             return;
@@ -249,7 +256,7 @@ function createRouter(adapter) {
             isReply: true,
         });
         if (!result || !result.text) {
-            adapter.log.warn(`Skript ${ctx.scriptId} hat auf Antwort zu "${ctx.cmd}" nicht reagiert`);
+            adapter.log.warn(`Script ${ctx.scriptId} did not respond to "${ctx.cmd}"`);
             await sendText(user, '⚠️ Keine Antwort vom Skript erhalten.');
             return;
         }
@@ -479,7 +486,7 @@ function createRouter(adapter) {
                 buffer: '',
             }),
         );
-        await sendMenu(user, numpadPromptText(finalPrompt, ''), NUMPAD_ROWS);
+        await sendMenu(user, numpadPromptText(finalPrompt, ''), getNumpadRows());
     }
 
     async function renderMenu(user, menuKey, customText, customOpts = false) {
@@ -514,7 +521,7 @@ function createRouter(adapter) {
             await adapter.setStateAsync('runtime.currentMenu', { val: menuKey, ack: true });
         } else {
             adapter.log.warn(
-                `renderMenu: "${menuKey}" hat keine Buttons - currentMenu bleibt unverändert, um Navigation nicht zu blockieren.`,
+                `renderMenu: "${menuKey}" has no buttons - currentMenu stays unchanged to avoid blocking navigation.`,
             );
         }
 
@@ -528,14 +535,14 @@ function createRouter(adapter) {
                     titleOpts = { html: !!result.html, noPreview: !!(result.noPreview || result.disablePreview) };
                 } else {
                     adapter.log.warn(
-                        `Skript ${menuDef.scriptId} hat auf "${menuDef.cmd}" nicht geantwortet - Menü-Titel fällt auf Antworttext/Titel zurück.`,
+                        `Script ${menuDef.scriptId} did not respond to "${menuDef.cmd}" - menu title falls back to reply text/title.`,
                     );
                 }
             }
             if (title === undefined && menuDef.message) {
                 title = await resolveTemplate(adapter, menuDef.message);
             } else if (title === undefined) {
-                title = await resolveTemplate(adapter, menuDef.title || 'Menü');
+                title = await resolveTemplate(adapter, menuDef.title || t('bot.defaultMenuTitle'));
                 if (menuDef.icon) {
                     const emoji = await resolveIcon(adapter, menuDef.icon, '');
                     if (emoji) {
@@ -555,7 +562,7 @@ function createRouter(adapter) {
 
         // rows zwischenspeichern, damit findButtonByText() bei Auto-Menüs
         // (deren Inhalt sich pro Aufruf ändert) den zuletzt gezeigten Stand kennt
-        const lastRowsId = `runtime.lastRows.${menuKey}`;
+        const lastRowsId = `runtime.lastRows.${sanitizeMenuKey(menuKey)}`;
         await ensureDynamicState(adapter, lastRowsId, '[]', 'json');
         await adapter.setStateAsync(lastRowsId, { val: JSON.stringify(rows), ack: true }).catch(() => {});
     }
@@ -568,7 +575,9 @@ function createRouter(adapter) {
 
         let rows = menuDef.rows || [];
         if (menuDef.source) {
-            const cached = await adapter.getStateAsync(`runtime.lastRows.${menuKey}`).catch(() => null);
+            const cached = await adapter
+                .getStateAsync(`runtime.lastRows.${sanitizeMenuKey(menuKey)}`)
+                .catch(() => null);
             try {
                 rows = JSON.parse(cached?.val || '[]');
             } catch {
@@ -589,7 +598,7 @@ function createRouter(adapter) {
                 }
             }
         }
-        adapter.log.debug(`findButtonByText: verglichen mit ${JSON.stringify(rows.flat().map(b => b.text))}`);
+        adapter.log.debug(`findButtonByText: compared against ${JSON.stringify(rows.flat().map(b => b.text))}`);
         return null;
     }
 
@@ -643,8 +652,8 @@ function createRouter(adapter) {
             try {
                 await mod.onCommand(cmd, value, ctx);
             } catch (e) {
-                adapter.log.error(`Modul "${mod.id}" warf bei ${cmd}: ${e.message}`);
-                await sendText(user, '⚠️ Interner Fehler, bitte später erneut versuchen.');
+                adapter.log.error(`Module "${mod.id}" threw an error on ${cmd}: ${e.message}`);
+                await sendText(user, t('bot.internalError'));
             }
             return;
         }
@@ -668,10 +677,10 @@ function createRouter(adapter) {
                 }
                 return;
             }
-            adapter.log.debug(`scriptBridge: ${scriptEntry.scriptId} hat für ${cmd} nicht mit Text geantwortet`);
+            adapter.log.debug(`scriptBridge: ${scriptEntry.scriptId} did not respond with text for ${cmd}`);
         }
 
-        adapter.log.debug(`Kein Modul für Command ${cmd} gefunden`);
+        adapter.log.debug(`No module found for command ${cmd}`);
     }
 
     async function handleIncoming(raw) {
@@ -700,7 +709,7 @@ function createRouter(adapter) {
             const isApprove = text.startsWith('TG:ADMIN:APPROVEAREA:');
             const area = text.slice((isApprove ? 'TG:ADMIN:APPROVEAREA:' : 'TG:ADMIN:DENYAREA:').length);
             if (!(await isAdmin(adapter, userKey))) {
-                await sendText(user, '⛔ Nur Admins dürfen das.');
+                await sendText(user, t('bot.adminsOnlyAction'));
                 return;
             }
             if (isApprove) {
@@ -728,7 +737,7 @@ function createRouter(adapter) {
             const isApprove = text.startsWith('TG:ADMIN:APPROVEUSER:');
             const targetKey = text.slice((isApprove ? 'TG:ADMIN:APPROVEUSER:' : 'TG:ADMIN:DENYUSER:').length);
             if (!(await isAdmin(adapter, userKey))) {
-                await sendText(user, '⛔ Nur Admins dürfen das.');
+                await sendText(user, t('bot.adminsOnlyAction'));
                 return;
             }
             if (isApprove) {
@@ -742,7 +751,7 @@ function createRouter(adapter) {
                 // Freigeschalteter Nutzer bekommt sofort Bescheid und sein Hauptmenü,
                 // statt erst bei der nächsten eigenen Nachricht davon zu erfahren.
                 if (chatState?.val) {
-                    await sendText(chatState.val, '✅ Du wurdest vom Admin freigeschaltet!');
+                    await sendText(chatState.val, t('bot.userApproved'));
                     await setHistory([]);
                     await clearInputMode();
                     await renderMenu(chatState.val, 'main');
@@ -809,8 +818,8 @@ function createRouter(adapter) {
         const button = await findButtonByText(currentMenu, text, userKey);
 
         if (!button) {
-            adapter.log.debug(`findButtonByText: kein Treffer für "${text}" in Menü "${currentMenu}"`);
-            await sendText(user, '🤷 Unbekannter Befehl oder keine Berechtigung.');
+            adapter.log.debug(`findButtonByText: no match for "${text}" in menu "${currentMenu}"`);
+            await sendText(user, t('bot.unknownCommand'));
             await renderMenu(user, currentMenu);
             return;
         }
@@ -859,7 +868,7 @@ function createRouter(adapter) {
                         captionNoPreview = !!(result.noPreview || result.disablePreview);
                     } else {
                         adapter.log.warn(
-                            `Skript ${button.scriptId} hat auf "${button.cmd}" nicht geantwortet - Bild wird ohne Skript-Text gesendet.`,
+                            `Script ${button.scriptId} did not respond to "${button.cmd}" - image sent without script text.`,
                         );
                     }
                 } else if (button.datapoint && !button.inputType) {
@@ -880,9 +889,7 @@ function createRouter(adapter) {
                             caption = `${isOn ? '❌' : '✅'} ${button.text || ''} → ${nextVal}`.trim();
                         }
                     } catch (e) {
-                        adapter.log.warn(
-                            `Datenpunkt-Toggle für ${button.datapoint} (mit Bild) fehlgeschlagen: ${e.message}`,
-                        );
+                        adapter.log.warn(`Datapoint toggle for ${button.datapoint} (with image) failed: ${e.message}`);
                     }
                 }
                 const imgPayload = { text: filePath, caption, user };
@@ -894,7 +901,7 @@ function createRouter(adapter) {
                 }
                 await adapter.sendToAsync(adapter.telegramInstance, imgPayload);
             } catch (e) {
-                adapter.log.warn(`Bild aus Datenpunkt ${button.imageDatapoint} fehlgeschlagen: ${e.message}`);
+                adapter.log.warn(`Image from datapoint ${button.imageDatapoint} failed: ${e.message}`);
                 await sendText(user, `⚠️ Bild konnte nicht gesendet werden.`);
             }
             return;
@@ -930,7 +937,7 @@ function createRouter(adapter) {
                     const currentMenuKey = (await adapter.getStateAsync('runtime.currentMenu'))?.val || 'main';
                     await renderMenu(user, currentMenuKey, confirmText);
                 } catch (e) {
-                    adapter.log.warn(`Multi-Status-Schreiben für ${rule.writeDatapoint} fehlgeschlagen: ${e.message}`);
+                    adapter.log.warn(`Multi-status write to ${rule.writeDatapoint} failed: ${e.message}`);
                     await sendText(user, `⚠️ Datenpunkt ${rule.writeDatapoint} konnte nicht geschrieben werden.`);
                 }
                 return;
@@ -980,7 +987,7 @@ function createRouter(adapter) {
                 const currentMenuKey = (await adapter.getStateAsync('runtime.currentMenu'))?.val || 'main';
                 await renderMenu(user, currentMenuKey, confirmText);
             } catch (e) {
-                adapter.log.warn(`HTTP-Request-Button (${button.httpUrl}) fehlgeschlagen: ${e.message}`);
+                adapter.log.warn(`HTTP request button (${button.httpUrl}) failed: ${e.message}`);
                 await sendText(user, `⚠️ HTTP-Request fehlgeschlagen: ${e.message}`);
             }
             return;
@@ -1002,7 +1009,7 @@ function createRouter(adapter) {
                     const currentMenuKey = (await adapter.getStateAsync('runtime.currentMenu'))?.val || 'main';
                     await renderMenu(user, currentMenuKey, confirmText);
                 } catch (e) {
-                    adapter.log.warn(`Festwert-Schreiben für ${button.datapoint} fehlgeschlagen: ${e.message}`);
+                    adapter.log.warn(`Fixed-value write to ${button.datapoint} failed: ${e.message}`);
                     await sendText(user, `⚠️ Datenpunkt ${button.datapoint} konnte nicht geschrieben werden.`);
                 }
                 return;
@@ -1062,7 +1069,7 @@ function createRouter(adapter) {
                 const currentMenuKey = (await adapter.getStateAsync('runtime.currentMenu'))?.val || 'main';
                 await renderMenu(user, currentMenuKey, confirmText);
             } catch (e) {
-                adapter.log.warn(`Datenpunkt-Toggle für ${button.datapoint} fehlgeschlagen: ${e.message}`);
+                adapter.log.warn(`Datapoint toggle for ${button.datapoint} failed: ${e.message}`);
                 await sendText(user, `⚠️ Datenpunkt ${button.datapoint} konnte nicht geschaltet werden.`);
             }
             return;
@@ -1099,7 +1106,7 @@ function createRouter(adapter) {
                     await sendText(user, result.text, opts);
                 }
             } else {
-                adapter.log.warn(`Skript ${button.scriptId} hat auf "${button.cmd}" nicht geantwortet`);
+                adapter.log.warn(`Script ${button.scriptId} did not respond to "${button.cmd}"`);
                 await sendText(user, '⚠️ Keine Antwort vom Skript erhalten.');
             }
             return;

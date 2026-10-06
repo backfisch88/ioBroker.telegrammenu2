@@ -5,8 +5,20 @@ const { ensureDynamicState } = require('./states');
 // Ein Registry-Eintrag entspricht 1:1 dem, was der Node-Editor pro Menü
 // exportiert: { title, rows, perm?, icon?, source? }.
 
+// Filtert nur Zeichen, die eine ioBroker-State-ID tatsächlich brechen würden
+// (Komma, Anführungszeichen, Klammern, Backslash, Stern, Fragezeichen,
+// Semikolon, spitze Klammern) sowie Leerzeichen. Bewusst MILDER als
+// userToKey() in core/users.js: Umlaute/Akzente bleiben unangetastet, damit
+// bereits bestehende Registry-Einträge (z. B. mit "ä"/"ö"/"ü" im Menü-Schlüssel)
+// nicht plötzlich eine andere State-ID bekommen und ins Leere laufen.
+function sanitizeMenuKey(menuKey) {
+    return String(menuKey || '')
+        .replace(/[[\]*,;'"`<>\\?]/g, '_')
+        .replace(/\s+/g, '_');
+}
+
 function registryStateId(menuKey) {
-    return `registry.${menuKey}`;
+    return `registry.${sanitizeMenuKey(menuKey)}`;
 }
 
 async function getMenu(adapter, menuKey) {
@@ -54,7 +66,7 @@ async function importRegistry(adapter, exportedJson) {
     await ensureDynamicState(adapter, 'registry._index', '[]', 'json');
     await adapter.setStateAsync('registry._index', { val: JSON.stringify(merged), ack: true });
 
-    adapter.log.info(`Registry importiert: ${keys.length} Menü(s) – ${keys.join(', ')}`);
+    adapter.log.info(`Registry imported: ${keys.length} menu(s) - ${keys.join(', ')}`);
     return keys;
 }
 
@@ -87,4 +99,13 @@ async function resetRegistry(adapter) {
     return keys;
 }
 
-module.exports = { getMenu, setMenu, importRegistry, registryStateId, listMenuKeys, resetRegistry, deleteMenus };
+module.exports = {
+    getMenu,
+    setMenu,
+    importRegistry,
+    registryStateId,
+    listMenuKeys,
+    resetRegistry,
+    deleteMenus,
+    sanitizeMenuKey,
+};

@@ -1,6 +1,7 @@
 'use strict';
 
 const { ensureDynamicState } = require('./states');
+const { t } = require('./botI18n');
 
 function userToKey(user) {
     return String(user || '').replace(/[^a-zA-Z0-9_-]/g, '_');
@@ -25,7 +26,7 @@ async function ensureUser(adapter, user) {
         await ensureDynamicState(adapter, `users.${key}.chatId`, String(user), 'text');
         await ensureDynamicState(adapter, `users.${key}.approved`, false, 'indicator');
         await addUserToIndex(adapter, key);
-        adapter.log.info(`Neuer Telegram-Nutzer registriert: ${key} (wartet auf Freischaltung)`);
+        adapter.log.info(`New Telegram user registered: ${key} (awaiting approval)`);
         return { key, isNew: true };
     }
     return { key, isNew: false };
@@ -81,11 +82,11 @@ async function notifyAdminsAboutPendingUser(adapter, userKey, _chatId) {
         if (!chatIds.length) {
             return;
         }
-        const text = `👤 Neuer Telegram-Nutzer "${userKey}" wartet auf Freischaltung.\n\nErlauben?`;
+        const text = t('bot.newUserRequest', { userKey });
         const keyboard = {
             inline_keyboard: [
                 [
-                    { text: '✅ Erlauben', callback_data: `TG:ADMIN:APPROVEUSER:${userKey}` },
+                    { text: t('bot.allow'), callback_data: `TG:ADMIN:APPROVEUSER:${userKey}` },
                     { text: '❌ Ablehnen', callback_data: `TG:ADMIN:DENYUSER:${userKey}` },
                 ],
             ],
@@ -94,7 +95,7 @@ async function notifyAdminsAboutPendingUser(adapter, userKey, _chatId) {
             await adapter.sendToAsync(adapter.telegramInstance, { text, user: adminChatId, reply_markup: keyboard });
         }
     } catch (e) {
-        adapter.log.warn(`users: Admin-Benachrichtigung für neuen Nutzer "${userKey}" fehlgeschlagen: ${e.message}`);
+        adapter.log.warn(`users: admin notification for new user "${userKey}" failed: ${e.message}`);
     }
 }
 

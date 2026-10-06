@@ -4,6 +4,7 @@ const { getMenu, setMenu, listMenuKeys } = require('./registry');
 const { isAdmin } = require('./users');
 const { permLabel } = require('./permLabels');
 const { ensureDynamicState } = require('./states');
+const { t } = require('./botI18n');
 
 // Sammelt alle im Editor tatsächlich verwendeten perm-Namen (Menüs + Buttons),
 // damit hier keine Liste doppelt gepflegt werden muss.
@@ -43,7 +44,7 @@ async function buildUserDetailMenu(adapter, targetUserKey) {
     const rows = [
         [
             {
-                text: `${role === 'admin' ? '👑' : '👤'} Rolle: ${role} (antippen zum Wechseln)`,
+                text: t('bot.roleLine', { icon: role === 'admin' ? '👑' : '👤', role }),
                 cmd: `TG:ADMIN:USER:${targetUserKey}:ROLE:TOGGLE`,
             },
         ],
@@ -61,8 +62,8 @@ async function buildUserDetailMenu(adapter, targetUserKey) {
     }
 
     rows.push([
-        { text: '⬅️ Zurück', cmd: 'TG:NAV:BACK' },
-        { text: '🏠 Hauptmenü', cmd: 'TG:NAV:MAIN' },
+        { text: t('bot.back'), cmd: 'TG:NAV:BACK' },
+        { text: t('bot.mainMenu'), cmd: 'TG:NAV:MAIN' },
     ]);
 
     return { title: `👤 Nutzer: ${targetUserKey}`, parent: 'admin_main', perm: 'admin', rows };
@@ -76,8 +77,8 @@ async function handleAdminCommand(adapter, cmd, requestUser, requestUserKey, ren
     }
 
     if (!(await isAdmin(adapter, requestUserKey))) {
-        adapter.log.debug(`handleAdminCommand: ${requestUserKey} ist kein Admin (role-State geprüft)`);
-        await sendTextFn(requestUser, '⛔ Nur für Admins.');
+        adapter.log.debug(`handleAdminCommand: ${requestUserKey} is not an admin (checked role state)`);
+        await sendTextFn(requestUser, t('bot.adminsOnly'));
         return true;
     }
 

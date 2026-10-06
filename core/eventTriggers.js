@@ -35,7 +35,7 @@ async function setupEventTriggers(adapter) {
     try {
         states = await adapter.getStatesAsync('registry.*');
     } catch (e) {
-        adapter.log.warn(`Event-Listener: registry.* konnte nicht gelesen werden: ${e.message}`);
+        adapter.log.warn(`Event listeners: could not read registry.*: ${e.message}`);
         return;
     }
 
@@ -73,7 +73,7 @@ async function setupEventTriggers(adapter) {
             try {
                 await adapter.subscribeForeignStatesAsync(dp);
             } catch (e) {
-                adapter.log.warn(`Event-Listener: Konnte ${dp} nicht abonnieren: ${e.message}`);
+                adapter.log.warn(`Event listeners: could not subscribe to ${dp}: ${e.message}`);
             }
         }
     }
@@ -81,7 +81,7 @@ async function setupEventTriggers(adapter) {
     adapter._eventTriggerMap = nextMap;
     const total = Object.values(nextMap).reduce((a, arr) => a + arr.length, 0);
     adapter.log.info(
-        `Event-Listener: ${Object.keys(nextMap).length} Datenpunkt(e) beobachtet, ${total} Menü-Trigger aktiv.`,
+        `Event listeners: ${Object.keys(nextMap).length} datapoint(s) watched, ${total} menu trigger(s) active.`,
     );
 }
 
@@ -118,7 +118,7 @@ async function handleEventTriggerStateChange(adapter, id, state, renderMenu) {
                 await renderMenu(chatId, entry.menuKey);
             } catch (e) {
                 adapter.log.warn(
-                    `Event-Listener: Menü "${entry.menuKey}" konnte nicht an ${chatId} gesendet werden: ${e.message}`,
+                    `Event listeners: menu "${entry.menuKey}" could not be sent to ${chatId}: ${e.message}`,
                 );
             }
         }

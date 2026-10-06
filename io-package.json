@@ -81,7 +81,19 @@
       "tab": "html"
     },
     "adminTab": {
-      "name": { "en": "Menu Editor", "de": "Menü-Editor" },
+      "name": {
+        "en": "telegrammenu2 Menu Editor",
+        "de": "telegrammenu2 Menü-Editor",
+        "ru": "telegrammenu2 Редактор меню",
+        "pt": "telegrammenu2 Editor de Menu",
+        "nl": "telegrammenu2 Menu-editor",
+        "fr": "telegrammenu2 Éditeur de menu",
+        "it": "telegrammenu2 Editor menu",
+        "es": "telegrammenu2 Editor de menú",
+        "pl": "telegrammenu2 Edytor menu",
+        "uk": "telegrammenu2 Редактор меню",
+        "zh-cn": "telegrammenu2 菜单编辑器"
+      },
       "singleton": true,
       "link": "adapter/telegrammenu2/tab.html"
     }

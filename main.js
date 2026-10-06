@@ -8,6 +8,7 @@ const { loadModules } = require('./core/moduleLoader');
 const { createScriptBridge } = require('./core/scriptBridge');
 const { importRegistry, listMenuKeys, getMenu, setMenu, resetRegistry, deleteMenus } = require('./core/registry');
 const { setupEventTriggers, handleEventTriggerStateChange } = require('./core/eventTriggers');
+const { initBotI18n } = require('./core/botI18n');
 const defaultRegistry = require('./core/defaultRegistry');
 
 class TelegramMenu2 extends utils.Adapter {
@@ -21,6 +22,7 @@ class TelegramMenu2 extends utils.Adapter {
     }
 
     async onReady() {
+        await initBotI18n(this);
         await migrateChannelObjects(this);
         await ensureCoreStates(this);
 
@@ -58,13 +60,13 @@ class TelegramMenu2 extends utils.Adapter {
         // Fachmodule aus modules/ laden (Plugin-System) – neue Datei rein,
         // fertig, kein Core-Code anfassen.
         this.modules = await loadModules(this);
-        this.log.info(`${this.modules.length} Modul(e) geladen: ${this.modules.map(m => m.id).join(', ') || '–'}`);
+        this.log.info(`${this.modules.length} module(s) loaded: ${this.modules.map(m => m.id).join(', ') || '-'}`);
 
         const existingMenus = await listMenuKeys(this);
         if (!existingMenus.length) {
             await importRegistry(this, defaultRegistry);
             this.log.info(
-                'Standard-Registry importiert (Hauptmenü + Einstellungen) – kein manueller Import nötig für den ersten Start.',
+                'Default registry imported (main menu + settings) - no manual import needed for first start.',
             );
         }
 
@@ -73,7 +75,7 @@ class TelegramMenu2 extends utils.Adapter {
         // auftauchen, ohne die restliche Registry anzufassen/zu überschreiben.
         if (!existingMenus.includes('settings_notify_pause')) {
             await setMenu(this, 'settings_notify_pause', defaultRegistry.settings_notify_pause);
-            this.log.info('Neues Untermenü "settings_notify_pause" ergänzt.');
+            this.log.info('New sub-menu "settings_notify_pause" added.');
         }
 
         await this.subscribeForeignStatesAsync(`${this.telegramInstance}.communicate.request`);
@@ -86,13 +88,13 @@ class TelegramMenu2 extends utils.Adapter {
         await setupEventTriggers(this);
         await this.subscribeStatesAsync('registry.*');
 
-        this.log.info(`telegramMenu2 bereit, hört auf ${this.telegramInstance}.communicate.request`);
+        this.log.info(`telegramMenu2 ready, listening on ${this.telegramInstance}.communicate.request`);
     }
 
     onStateChange(id, state) {
         if (id.startsWith(`${this.namespace}.registry.`)) {
             setupEventTriggers(this).catch(e =>
-                this.log.warn(`setupEventTriggers (Rescan nach Registry-Änderung): ${e.message}`),
+                this.log.warn(`setupEventTriggers (rescan after registry change): ${e.message}`),
             );
             return;
         }
@@ -105,7 +107,7 @@ class TelegramMenu2 extends utils.Adapter {
         }
         handleEventTriggerStateChange(this, id, state, (chatId, menuKey) =>
             this.router.renderMenu(chatId, menuKey),
-        ).catch(e => this.log.warn(`Event-Listener-Verarbeitung für ${id}: ${e.message}`));
+        ).catch(e => this.log.warn(`Event listener processing for ${id}: ${e.message}`));
     }
 
     // Übergangs-Bridge: solange noch nicht-portierte Skripte im JS-Adapter
@@ -173,7 +175,7 @@ class TelegramMenu2 extends utils.Adapter {
                 if (obj.callback) {
                     this.sendTo(obj.from, obj.command, { ok: true }, obj.callback);
                 }
-            })().catch(e => this.log.error(`Unbehandelter Fehler im Message-Handler: ${e.message}`));
+            })().catch(e => this.log.error(`Unhandled error in message handler: ${e.message}`));
             return;
         }
 
@@ -184,7 +186,7 @@ class TelegramMenu2 extends utils.Adapter {
                 if (obj.callback) {
                     this.sendTo(obj.from, obj.command, { ok: true }, obj.callback);
                 }
-            })().catch(e => this.log.error(`Unbehandelter Fehler im Message-Handler: ${e.message}`));
+            })().catch(e => this.log.error(`Unhandled error in message handler: ${e.message}`));
             return;
         }
 
@@ -220,7 +222,7 @@ class TelegramMenu2 extends utils.Adapter {
                 if (obj.callback) {
                     this.sendTo(obj.from, obj.command, { ok: true }, obj.callback);
                 }
-            })().catch(e => this.log.error(`Unbehandelter Fehler im Message-Handler: ${e.message}`));
+            })().catch(e => this.log.error(`Unhandled error in message handler: ${e.message}`));
             return;
         }
 
@@ -248,7 +250,7 @@ class TelegramMenu2 extends utils.Adapter {
             if (typeof obj.message === 'string' && obj.message) {
                 const { type, text } = this.detectTypeFromText(obj.message);
                 this.log.info(
-                    `Kompatibilitäts-Nachricht von ${fromAdapter} (String, Typ "${type}") - über notify() geroutet`,
+                    `Compatibility message from ${fromAdapter} (string, type "${type}") - routed via notify()`,
                 );
                 this.notify(fromAdapter, type, text);
                 if (obj.callback) {
@@ -261,7 +263,7 @@ class TelegramMenu2 extends utils.Adapter {
                 const target = obj.message.chatId || obj.message.user;
                 if (target) {
                     this.log.info(
-                        `Kompatibilitäts-Nachricht von ${fromAdapter} mit explizitem Ziel (${target}) - direkt weitergeleitet`,
+                        `Compatibility message from ${fromAdapter} with explicit target (${target}) - forwarded directly`,
                     );
                     this.sendToAsync(this.telegramInstance, { text: obj.message.text, user: target })
                         .then(() => {
@@ -270,7 +272,7 @@ class TelegramMenu2 extends utils.Adapter {
                             }
                         })
                         .catch(e => {
-                            this.log.warn(`Weiterleitung an ${this.telegramInstance} fehlgeschlagen: ${e.message}`);
+                            this.log.warn(`Forwarding to ${this.telegramInstance} failed: ${e.message}`);
                             if (obj.callback) {
                                 this.sendTo(
                                     obj.from,
@@ -283,7 +285,7 @@ class TelegramMenu2 extends utils.Adapter {
                 } else {
                     const { type, text } = this.detectTypeFromText(obj.message.text);
                     this.log.info(
-                        `Kompatibilitäts-Nachricht von ${fromAdapter} (Objekt, kein Ziel, Typ "${type}") - über notify() geroutet`,
+                        `Compatibility message from ${fromAdapter} (object, no target, type "${type}") - routed via notify()`,
                     );
                     this.notify(fromAdapter, type, text);
                     if (obj.callback) {
@@ -295,7 +297,7 @@ class TelegramMenu2 extends utils.Adapter {
         }
 
         if (!obj.command) {
-            this.log.info(`Message ohne "command" empfangen - Inhalt: ${JSON.stringify(obj)}`);
+            this.log.info(`Message received without "command" - content: ${JSON.stringify(obj)}`);
             return;
         }
 
@@ -323,7 +325,7 @@ class TelegramMenu2 extends utils.Adapter {
                 if (obj.callback) {
                     this.sendTo(obj.from, obj.command, { ok: true }, obj.callback);
                 }
-            })().catch(e => this.log.error(`Unbehandelter Fehler im Message-Handler: ${e.message}`));
+            })().catch(e => this.log.error(`Unhandled error in message handler: ${e.message}`));
             return;
         }
 
@@ -339,7 +341,7 @@ class TelegramMenu2 extends utils.Adapter {
                 if (obj.callback) {
                     this.sendTo(obj.from, obj.command, { ok: true, layout }, obj.callback);
                 }
-            })().catch(e => this.log.error(`Unbehandelter Fehler im Message-Handler: ${e.message}`));
+            })().catch(e => this.log.error(`Unhandled error in message handler: ${e.message}`));
             return;
         }
 
@@ -350,12 +352,12 @@ class TelegramMenu2 extends utils.Adapter {
             (async () => {
                 const removed = await deleteMenus(this, Array.isArray(keys) ? keys : []);
                 if (removed.length) {
-                    this.log.info(`Menüs entfernt (nicht mehr im Editor vorhanden): ${removed.join(', ')}`);
+                    this.log.info(`Menus removed (no longer present in editor): ${removed.join(', ')}`);
                 }
                 if (obj.callback) {
                     this.sendTo(obj.from, obj.command, { ok: true, removed }, obj.callback);
                 }
-            })().catch(e => this.log.error(`Unbehandelter Fehler im Message-Handler: ${e.message}`));
+            })().catch(e => this.log.error(`Unhandled error in message handler: ${e.message}`));
             return;
         }
 
@@ -364,7 +366,7 @@ class TelegramMenu2 extends utils.Adapter {
         if (obj.command === 'resetRegistry') {
             (async () => {
                 const removed = await resetRegistry(this);
-                this.log.info(`Registry zurückgesetzt - entfernt: ${removed.join(', ') || '(leer)'}`);
+                this.log.info(`Registry reset - removed: ${removed.join(', ') || '(empty)'}`);
                 if (obj.callback) {
                     this.sendTo(obj.from, obj.command, { ok: true, removed }, obj.callback);
                 }
@@ -399,7 +401,7 @@ class TelegramMenu2 extends utils.Adapter {
                         this.sendTo(obj.from, obj.command, { ok: false, error: e.message }, obj.callback);
                     }
                 }
-            })().catch(e => this.log.error(`Unbehandelter Fehler im Message-Handler: ${e.message}`));
+            })().catch(e => this.log.error(`Unhandled error in message handler: ${e.message}`));
             return;
         }
 
@@ -431,7 +433,7 @@ class TelegramMenu2 extends utils.Adapter {
                 if (obj.callback) {
                     this.sendTo(obj.from, obj.command, { ok }, obj.callback);
                 }
-            })().catch(e => this.log.error(`Unbehandelter Fehler im Message-Handler: ${e.message}`));
+            })().catch(e => this.log.error(`Unhandled error in message handler: ${e.message}`));
             return;
         }
 
@@ -444,7 +446,7 @@ class TelegramMenu2 extends utils.Adapter {
                 if (obj.callback) {
                     this.sendTo(obj.from, obj.command, { ok: true }, obj.callback);
                 }
-            })().catch(e => this.log.error(`Unbehandelter Fehler im Message-Handler: ${e.message}`));
+            })().catch(e => this.log.error(`Unhandled error in message handler: ${e.message}`));
             return;
         }
 
@@ -468,7 +470,7 @@ class TelegramMenu2 extends utils.Adapter {
                 if (obj.callback) {
                     this.sendTo(obj.from, obj.command, { ok }, obj.callback);
                 }
-            })().catch(e => this.log.error(`Unbehandelter Fehler im Message-Handler: ${e.message}`));
+            })().catch(e => this.log.error(`Unhandled error in message handler: ${e.message}`));
             return;
         }
 
@@ -481,7 +483,7 @@ class TelegramMenu2 extends utils.Adapter {
                 if (obj.callback) {
                     this.sendTo(obj.from, obj.command, { ok: true }, obj.callback);
                 }
-            })().catch(e => this.log.error(`Unbehandelter Fehler im Message-Handler: ${e.message}`));
+            })().catch(e => this.log.error(`Unhandled error in message handler: ${e.message}`));
             return;
         }
 
@@ -494,7 +496,7 @@ class TelegramMenu2 extends utils.Adapter {
                 if (obj.callback) {
                     this.sendTo(obj.from, obj.command, { ok: true }, obj.callback);
                 }
-            })().catch(e => this.log.error(`Unbehandelter Fehler im Message-Handler: ${e.message}`));
+            })().catch(e => this.log.error(`Unhandled error in message handler: ${e.message}`));
             return;
         }
 
@@ -537,9 +539,7 @@ class TelegramMenu2 extends utils.Adapter {
         // LaundryLens, die telegrammenu2 als "telegram-kompatibel" erkennen und
         // in einem eigenen Format senden. Zeigt im Log genau, was ankommt, damit
         // wir den passenden Handler dafür bauen können, statt zu raten.
-        this.log.info(
-            `Unbekannter/nicht behandelter Message-Command: "${obj.command}" - Inhalt: ${JSON.stringify(obj.message)}`,
-        );
+        this.log.info(`Unknown/unhandled message command: "${obj.command}" - content: ${JSON.stringify(obj.message)}`);
         if (obj.callback) {
             this.sendTo(
                 obj.from,

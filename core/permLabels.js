@@ -1,17 +1,21 @@
 'use strict';
 
-// Übersetzt technische perm-/Bereichsnamen in schöne Anzeigenamen, z. B. in
-// der Benutzerverwaltung und den Benachrichtigungen. Nur ein paar universelle
-// Einträge vordefiniert - alles andere richtest du bequem im Editor-Tab selbst
-// ein (Menü-Knoten-Panel: "Anzeigename für den Bereich").
+const { t } = require('./botI18n');
 
-const LABELS = {
-    admin: 'Administrator',
-    settings: 'Einstellungen',
-};
+// Translates technical perm/area names into nice display names, e.g. in user
+// management and notifications. Only a couple of universal entries are
+// predefined here - everything else is set conveniently in the editor tab
+// itself (menu node panel: "display name for the area").
 
-function permLabel(perm) {
-    return LABELS[perm] || perm;
+function getLabels() {
+    return {
+        admin: 'Administrator',
+        settings: t('bot.settings'),
+    };
 }
 
-module.exports = { permLabel, LABELS };
+function permLabel(perm) {
+    return getLabels()[perm] || perm;
+}
+
+module.exports = { permLabel, getLabels };
