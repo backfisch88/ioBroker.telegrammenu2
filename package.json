@@ -27,7 +27,7 @@
   },
   "files": [
     "admin/",
-    "core/",
+    "lib/",
     "modules/",
     "img/",
     "io-package.json",

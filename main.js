@@ -6,15 +6,15 @@ const {
     ensureDynamicState,
     migrateChannelObjects,
     migrateCoreStateMetadata,
-} = require('./core/states');
-const { createNotifyEngine } = require('./core/notify');
-const { createRouter } = require('./core/base');
-const { loadModules } = require('./core/moduleLoader');
-const { createScriptBridge } = require('./core/scriptBridge');
-const { importRegistry, listMenuKeys, getMenu, setMenu, resetRegistry, deleteMenus } = require('./core/registry');
-const { setupEventTriggers, handleEventTriggerStateChange } = require('./core/eventTriggers');
-const { initBotI18n } = require('./core/botI18n');
-const defaultRegistry = require('./core/defaultRegistry');
+} = require('./lib/states');
+const { createNotifyEngine } = require('./lib/notify');
+const { createRouter } = require('./lib/base');
+const { loadModules } = require('./lib/moduleLoader');
+const { createScriptBridge } = require('./lib/scriptBridge');
+const { importRegistry, listMenuKeys, getMenu, setMenu, resetRegistry, deleteMenus } = require('./lib/registry');
+const { setupEventTriggers, handleEventTriggerStateChange } = require('./lib/eventTriggers');
+const { initBotI18n } = require('./lib/botI18n');
+const defaultRegistry = require('./lib/defaultRegistry');
 
 class TelegramMenu2 extends utils.Adapter {
     constructor(options) {
@@ -550,7 +550,7 @@ class TelegramMenu2 extends utils.Adapter {
             this.sendTo(
                 obj.from,
                 obj.command,
-                { ok: false, error: `Command "${obj.command}" wird noch nicht unterstützt` },
+                { ok: false, error: `Command "${obj.command}" is not supported yet` },
                 obj.callback,
             );
         }

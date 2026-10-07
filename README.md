@@ -144,6 +144,14 @@ No registration call needed — just set the script's ID and the command string 
 
 ## Changelog
 
+### **WORK IN PROGRESS**
+
+- Moved the JavaScript modules from `core/` to the usual `lib/` directory
+- All remaining German texts sent to Telegram users are now translated via `botI18n.js` (11 languages); the numpad cancel/done buttons work with every language
+- All remaining German texts in the editor tab are now translated via the tab's i18n layer (11 languages)
+- `common.singleton: true` is now set on the adapter level (only one instance can be installed)
+- Extended the unit tests (translation completeness, placeholder consistency, no hard-coded German bot texts)
+
 ### 0.2.3
 
 - Repository maintenance: npm Trusted Publishing (OIDC) configured, no functional changes

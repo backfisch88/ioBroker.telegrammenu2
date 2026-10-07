@@ -6,11 +6,11 @@
 
 const fs = require('fs');
 const path = require('path');
-const { ensureCoreStates } = require('../core/states');
-const { createNotifyEngine } = require('../core/notify');
-const { createRouter } = require('../core/base');
-const { loadModules } = require('../core/moduleLoader');
-const { importRegistry, setMenu } = require('../core/registry');
+const { ensureCoreStates } = require('../lib/states');
+const { createNotifyEngine } = require('../lib/notify');
+const { createRouter } = require('../lib/base');
+const { loadModules } = require('../lib/moduleLoader');
+const { importRegistry, setMenu } = require('../lib/registry');
 
 const store = new Map();
 const sentMessages = [];
@@ -148,7 +148,7 @@ async function run() {
     fakeAdapter.notify.getAllAreasFull = notifyEngine.getAllAreasFull;
     await notifyEngine.init();
 
-    const { createScriptBridge } = require('../core/scriptBridge');
+    const { createScriptBridge } = require('../lib/scriptBridge');
     fakeAdapter.scriptBridge = createScriptBridge(fakeAdapter);
     await fakeAdapter.scriptBridge.init();
 
@@ -161,8 +161,8 @@ async function run() {
 
     // Frischer Zustand wie nach Neuinstallation: KEIN manueller Import.
     // main.js würde hier automatisch defaultRegistry importieren.
-    const defaultRegistry = require('../core/defaultRegistry');
-    const existingMenus = await require('../core/registry').listMenuKeys(fakeAdapter);
+    const defaultRegistry = require('../lib/defaultRegistry');
+    const existingMenus = await require('../lib/registry').listMenuKeys(fakeAdapter);
     if (!existingMenus.length) {
         await importRegistry(fakeAdapter, defaultRegistry);
         console.log('Standard-Registry automatisch importiert (frische Installation simuliert)');
@@ -349,7 +349,7 @@ async function run() {
     // Bereich in der Präferenzenliste nicht sehen (er bekäme ja ohnehin keine
     // tatsächliche Nachricht daraus, siehe notify.js send()).
     await fakeAdapter.setStateAsync('users.123456.permissions.spontanBereich', { val: false, ack: true });
-    const { buildAutoRows } = require('../core/autoMenus');
+    const { buildAutoRows } = require('../lib/autoMenus');
     const notifyRowsNoPerm = await buildAutoRows(fakeAdapter, { source: 'notifyPrefs' }, '123456');
     const notifyTextsNoPerm = notifyRowsNoPerm.flat().map(b => b.text);
     console.log('--- Benachrichtigungen-Liste, Admin OHNE Recht für spontanBereich ---', notifyTextsNoPerm);
@@ -619,7 +619,7 @@ async function run() {
     }
     const numpadConfirmMsg = sentMessages.at(-1);
     console.log('--- TG:VALCUSTOM: Bestätigung nach Eingabe ---', numpadConfirmMsg?.payload?.text);
-    if (numpadConfirmMsg?.payload?.text !== '✅ 35% gesetzt.') {
+    if (numpadConfirmMsg?.payload?.text !== '✅ 35% set.') {
         throw new Error('TG:VALCUSTOM hat den Standard-Bestätigungstext ({value}/{unit}) nicht korrekt aufgelöst!');
     }
 
@@ -634,7 +634,7 @@ async function run() {
         perm: 'admin',
         parent: 'main',
     });
-    const { key: unprivKey } = await require('../core/users').ensureUser(fakeAdapter, '333333');
+    const { key: unprivKey } = await require('../lib/users').ensureUser(fakeAdapter, '333333');
     await fakeAdapter.setStateAsync(`users.${unprivKey}.approved`, { val: true, ack: true });
     await fakeAdapter.setStateAsync(`users.${unprivKey}.role`, { val: 'guest', ack: true });
     await fakeAdapter.router.handleIncoming('[333333]TG:VALSET:test_percent_menu_admin|50');
@@ -648,7 +648,7 @@ async function run() {
 
     // Registry-Menü gezielt löschen (Sync-Delete beim Speichern) - Demo-Menü
     // simulieren, das nicht mehr im Graphen ist, aber noch im Index steht
-    const { deleteMenus, listMenuKeys: listMenuKeysCheck } = require('../core/registry');
+    const { deleteMenus, listMenuKeys: listMenuKeysCheck } = require('../lib/registry');
     const beforeDelete = await listMenuKeysCheck(fakeAdapter);
     console.log('--- Registry-Menüs vor gezieltem Löschen ---', beforeDelete);
     const removedMenus = await deleteMenus(fakeAdapter, ['test_menu']);
@@ -711,7 +711,7 @@ async function run() {
     sentMessages.length = 0;
     await fakeAdapter.router.dispatchCommand('TG:SECURETEST:SHOW', '', '123456', '123456');
     console.log('--- Skript-Bridge ohne Recht ---', sentMessages.at(-1)?.payload?.text);
-    if (!sentMessages.at(-1)?.payload?.text?.includes('Keine Berechtigung')) {
+    if (!sentMessages.at(-1)?.payload?.text?.includes('No permission')) {
         throw new Error('Skript-Bridge hat Rechteprüfung nicht durchgesetzt!');
     }
     await fakeAdapter.setStateAsync('users.123456.permissions.secureArea', { val: true, ack: true });
@@ -858,6 +858,17 @@ async function run() {
     const inputModeAfterCancel = await fakeAdapter.getStateAsync('runtime.inputMode');
     if (inputModeAfterCancel?.val) {
         throw new Error('inputMode wurde nach Abbrechen nicht geleert!');
+    }
+
+    // Abbrechen auch mit dem übersetzten (englischen) Button-Label
+    await fakeAdapter.router.handleIncoming('[123456] 🌡️ Zieltemperatur');
+    await fakeAdapter.router.handleIncoming('[123456] 5');
+    sentMessages.length = 0;
+    await fakeAdapter.router.handleIncoming('[123456] ❌ Cancel');
+    console.log('--- Cancel (EN-Label) ---', sentMessages.at(-1)?.payload?.text);
+    const inputModeAfterCancelEn = await fakeAdapter.getStateAsync('runtime.inputMode');
+    if (inputModeAfterCancelEn?.val || !String(sentMessages.at(-1)?.payload?.text || '').includes('Cancelled')) {
+        throw new Error('Numpad-Abbruch mit dem englischen Label "❌ Cancel" funktioniert nicht!');
     }
 
     // Eigene Frage statt Standardtext
@@ -1080,7 +1091,7 @@ async function run() {
     await fakeAdapter.notify.setTypeLabel('waesche', 'update', 'Info');
     await fakeAdapter.notify.setTypeLabel('waesche', 'done', 'Info');
     await fakeAdapter.setStateAsync('users.123456.permissions.waesche', { val: true, ack: true });
-    const { buildAutoRows: buildAutoRowsMerge } = require('../core/autoMenus');
+    const { buildAutoRows: buildAutoRowsMerge } = require('../lib/autoMenus');
     const mergedRows = await buildAutoRowsMerge(fakeAdapter, { source: 'notifyPrefs' }, '123456');
     const mergedTexts = mergedRows.flat().map(b => b.text);
     console.log('--- Zusammengefasste Benachrichtigungen ---', mergedTexts);
@@ -1092,7 +1103,7 @@ async function run() {
     // Gemeinsames Umschalten: einmal antippen -> alle 3 zugrundeliegenden Typen gemeinsam aus
     const waescheBtn = mergedRows.flat().find(b => b.text.includes('Wäsche: Info'));
     console.log('--- Gruppen-Command ---', waescheBtn.cmd);
-    const { handleNotifyToggle } = require('../core/settings');
+    const { handleNotifyToggle } = require('../lib/settings');
     await handleNotifyToggle(fakeAdapter, waescheBtn.cmd, '123456', '123456', fakeAdapter.router.renderMenu);
     const startPref = await fakeAdapter.getStateAsync('users.123456.notify.waesche.start');
     const updatePref = await fakeAdapter.getStateAsync('users.123456.notify.waesche.update');
@@ -1561,7 +1572,7 @@ async function run() {
     const mainListRows = await buildAutoRows(fakeAdapter, { source: 'notifyPrefs' }, '123456');
     const mainListTexts = mainListRows.flat().map(b => b.text);
     console.log('--- Hauptliste: Pause-Buttons NICHT direkt drin, nur Link ---', mainListTexts);
-    if (mainListTexts.some(t => t.includes('pausieren') || t.includes('Pause aufheben'))) {
+    if (mainListTexts.some(t => t.includes('Pause for 24h') || t.includes('Resume'))) {
         throw new Error('Pause-Buttons stecken noch direkt in der Hauptliste statt im Untermenü!');
     }
     if (!mainListTexts.some(t => t.includes('⏸ Pausieren'))) {
@@ -1575,7 +1586,7 @@ async function run() {
     const pausedRows = await buildAutoRows(fakeAdapter, { source: 'notifyPause' }, '123456');
     const pausedTexts = pausedRows.flat().map(b => b.text);
     console.log('--- Pause-Untermenü ---', pausedTexts);
-    if (!pausedTexts.some(t => t.includes('▶️') && t.includes('Pause aufheben'))) {
+    if (!pausedTexts.some(t => t.includes('▶️') && t.includes('Resume'))) {
         throw new Error('Pause-Untermenü zeigt bei aktiver Pause nicht den "Pause aufheben"-Button!');
     }
     if (!pausedTexts.includes('⬅️ Back') || !pausedTexts.includes('🏠 Main Menu')) {
@@ -1598,11 +1609,11 @@ async function run() {
     // Globale Einstellung "Buttons pro Zeile" (am Hauptmenü) wirkt sich auch auf
     // die Auto-Menüs aus (nicht nur auf manuell verdrahtete Menüs im Editor).
     // Braucht mind. 3 Nutzer, um eine 3er-Zeile überhaupt zeigen zu können.
-    await require('../core/users').ensureUser(fakeAdapter, '888888');
-    await require('../core/users').ensureUser(fakeAdapter, '888889');
+    await require('../lib/users').ensureUser(fakeAdapter, '888888');
+    await require('../lib/users').ensureUser(fakeAdapter, '888889');
     await fakeAdapter.setStateAsync('users.888888.role', { val: 'guest', ack: true });
     await fakeAdapter.setStateAsync('users.888889.role', { val: 'guest', ack: true });
-    const mainBefore = await require('../core/registry').getMenu(fakeAdapter, 'main');
+    const mainBefore = await require('../lib/registry').getMenu(fakeAdapter, 'main');
     await setMenu(fakeAdapter, 'main', { ...mainBefore, buttonsPerRow: 3 });
     const userListRows3 = await buildAutoRows(fakeAdapter, { source: 'users' }, '123456');
     console.log('--- Benutzer-Liste mit buttonsPerRow=3 ---', userListRows3);
@@ -1613,7 +1624,7 @@ async function run() {
     await setMenu(fakeAdapter, 'main', mainBefore); // zurücksetzen, damit spätere Tests unbeeinflusst bleiben
 
     // Benutzer-Detail (admin.js): Kombi-Button statt nur Zurück
-    const { handleAdminCommand: handleAdminCommandForCombo } = require('../core/admin');
+    const { handleAdminCommand: handleAdminCommandForCombo } = require('../lib/admin');
     await handleAdminCommandForCombo(
         fakeAdapter,
         'TG:ADMIN:USER:123456',
@@ -1621,7 +1632,7 @@ async function run() {
         '123456',
         fakeAdapter.router.renderMenu,
     );
-    const { getMenu: getMenuForCombo } = require('../core/registry');
+    const { getMenu: getMenuForCombo } = require('../lib/registry');
     const userDetailDef = await getMenuForCombo(fakeAdapter, 'admin_user_detail');
     const lastDetailRow = (userDetailDef?.rows || []).at(-1).map(b => b.text);
     console.log('--- Benutzer-Detail letzte Zeile ---', lastDetailRow);
@@ -1861,8 +1872,8 @@ async function run() {
     }
 
     // Berechtigungs-Liste soll Anzeigenamen aus den Benachrichtigungen mitbenutzen
-    const { getMenu } = require('../core/registry');
-    const { handleAdminCommand } = require('../core/admin');
+    const { getMenu } = require('../lib/registry');
+    const { handleAdminCommand } = require('../lib/admin');
     await fakeAdapter.notify.registerAreas('laundrylens', { laundrylens: ['done'] });
     await fakeAdapter.notify.approveArea('laundrylens');
     await fakeAdapter.notify.setAreaLabel('laundrylens', 'Wäsche');
@@ -2247,7 +2258,7 @@ async function run() {
     await fakeAdapter.router.handleIncoming('[555555] /start');
     const pendingMsg = sentMessages.find(m => m.payload?.user === '555555');
     console.log('--- Warte-Nachricht für frischen Nutzer ---', pendingMsg?.payload?.text);
-    if (pendingMsg?.payload?.text !== '⏳ Warte auf Freischaltung durch den Admin.') {
+    if (pendingMsg?.payload?.text !== '⏳ Waiting for approval by the admin.') {
         throw new Error('Frischer Nutzer hat nicht die Warte-Nachricht bekommen!');
     }
 
@@ -2273,7 +2284,7 @@ async function run() {
     sentMessages.length = 0;
     await fakeAdapter.router.handleIncoming('[555555] Irgendwas');
     console.log('--- Nachricht vor Freischaltung (2. Versuch) ---', sentMessages.at(-1)?.payload?.text);
-    if (sentMessages.at(-1)?.payload?.text !== '⏳ Warte auf Freischaltung durch den Admin.') {
+    if (sentMessages.at(-1)?.payload?.text !== '⏳ Waiting for approval by the admin.') {
         throw new Error('Wartender Nutzer kam trotzdem durch!');
     }
     if (sentMessages.some(m => m.payload?.reply_markup?.inline_keyboard)) {
@@ -2285,7 +2296,7 @@ async function run() {
     await fakeAdapter.router.handleIncoming(`[123456] ${approveUserCallback}`);
     const newUserMenu = sentMessages.find(m => m.payload?.user === '555555');
     console.log('--- Nutzer nach Freischaltung ---', newUserMenu?.payload?.text);
-    if (!newUserMenu || newUserMenu.payload.text === '⏳ Warte auf Freischaltung durch den Admin.') {
+    if (!newUserMenu || newUserMenu.payload.text === '⏳ Waiting for approval by the admin.') {
         throw new Error('Nutzer hat nach Freischaltung nicht sein Hauptmenü bekommen!');
     }
 
@@ -2293,7 +2304,7 @@ async function run() {
     sentMessages.length = 0;
     await fakeAdapter.router.handleIncoming('[555555] /menu');
     console.log('--- Freigeschalteter Nutzer, /menu ---', sentMessages.at(-1)?.payload?.text);
-    if (sentMessages.at(-1)?.payload?.text === '⏳ Warte auf Freischaltung durch den Admin.') {
+    if (sentMessages.at(-1)?.payload?.text === '⏳ Waiting for approval by the admin.') {
         throw new Error('Freigeschalteter Nutzer wird immer noch blockiert!');
     }
 
@@ -2317,14 +2328,14 @@ async function run() {
     sentMessages.length = 0;
     await fakeAdapter.router.handleIncoming('[666666] /start');
     console.log('--- Erneuter Kontakt nach Ablehnung (wieder brandneu?) ---', sentMessages.at(-1)?.payload?.text);
-    if (sentMessages.at(-1)?.payload?.text !== '⏳ Warte auf Freischaltung durch den Admin.') {
+    if (sentMessages.at(-1)?.payload?.text !== '⏳ Waiting for approval by the admin.') {
         throw new Error('Nutzer wurde nach Ablehnung nicht wieder als brandneu behandelt!');
     }
 
     fakeAdapter._clearNotifyTimers();
     // --- Event-Listener -> automatisches Menü ---
-    const { setupEventTriggers, handleEventTriggerStateChange } = require('../core/eventTriggers');
-    const { ensureUser } = require('../core/users');
+    const { setupEventTriggers, handleEventTriggerStateChange } = require('../lib/eventTriggers');
+    const { ensureUser } = require('../lib/users');
 
     const { key: triggerUserKey } = await ensureUser(fakeAdapter, '777777');
     await fakeAdapter.setStateAsync(`users.${triggerUserKey}.approved`, { val: true, ack: true });
@@ -2516,7 +2527,7 @@ async function run() {
     });
     await fakeAdapter.setStateAsync('users.migrationtest.permissions.StaleRole', { val: true, ack: true });
 
-    const { migrateChannelObjects } = require('../core/states');
+    const { migrateChannelObjects } = require('../lib/states');
     await migrateChannelObjects(fakeAdapter);
 
     const migratedStaleRole = await fakeAdapter.getObjectAsync('users.migrationtest.permissions.StaleRole');
@@ -2572,7 +2583,7 @@ async function run() {
         common: { name: 'cmd.id', type: 'string', role: 'text', read: true, write: true },
         native: {},
     });
-    const { migrateCoreStateMetadata } = require('../core/states');
+    const { migrateCoreStateMetadata } = require('../lib/states');
     await migrateCoreStateMetadata(fakeAdapter);
 
     const migratedCmdTs = await fakeAdapter.getObjectAsync('cmd.ts');
@@ -2598,6 +2609,57 @@ async function run() {
     );
     if (migratedCmdTsValue?.val !== 1234567890) {
         throw new Error('Core-State-Migration hat versehentlich den gespeicherten Wert verändert!');
+    }
+
+    // --- botI18n: Vollständigkeit + konsistente Platzhalter in allen Sprachen ---
+    {
+        const { TRANSLATIONS, SUPPORTED_LANGS, t } = require('../lib/botI18n');
+        const placeholders = s =>
+            [...String(s).matchAll(/\{(\w+)\}/g)]
+                .map(m => m[1])
+                .sort()
+                .join(',');
+        for (const [key, entry] of Object.entries(TRANSLATIONS)) {
+            for (const lang of SUPPORTED_LANGS) {
+                if (typeof entry[lang] !== 'string' || !entry[lang].trim()) {
+                    throw new Error(`botI18n: Key "${key}" fehlt/leer für Sprache "${lang}"!`);
+                }
+                if (placeholders(entry[lang]) !== placeholders(entry.en)) {
+                    throw new Error(`botI18n: Key "${key}" hat in "${lang}" abweichende Platzhalter!`);
+                }
+            }
+        }
+        if (t('bot.noPermission', { target: 'x' }) !== '⛔ No permission for x.') {
+            throw new Error('botI18n: Platzhalter-Ersetzung in t() funktioniert nicht!');
+        }
+        console.log('--- botI18n: Keys vollständig in allen Sprachen ---', Object.keys(TRANSLATIONS).length);
+    }
+
+    // --- Keine hartcodierten deutschen Bot-Texte mehr im Quellcode (Log-Aufrufe/Kommentare ausgenommen) ---
+    {
+        const fsCheck = require('node:fs');
+        const pathCheck = require('node:path');
+        const libDir = pathCheck.join(__dirname, '..', 'lib');
+        const files = fsCheck
+            .readdirSync(libDir)
+            .filter(f => f.endsWith('.js') && f !== 'botI18n.js' && f !== 'defaultRegistry.js')
+            .map(f => pathCheck.join(libDir, f));
+        files.push(pathCheck.join(__dirname, '..', 'main.js'));
+        const germanText =
+            /(?:sendText|sendTextNoKeyboard|sendMenu)\([^\n]*['"`][^'"`\n]*(?:Bitte|Fehler|nicht|Datenpunkt|Berechtigung|Nutzer|Bereich|freigeschaltet|Abbrechen|Gespeichert)/;
+        for (const file of files) {
+            fsCheck
+                .readFileSync(file, 'utf8')
+                .split('\n')
+                .forEach((line, i) => {
+                    if (!line.trim().startsWith('//') && germanText.test(line)) {
+                        throw new Error(
+                            `Hartcodierter deutscher Bot-Text in ${pathCheck.basename(file)}:${i + 1}: ${line.trim()}`,
+                        );
+                    }
+                });
+        }
+        console.log('--- Keine hartcodierten deutschen Bot-Texte in lib/ und main.js ---');
     }
 
     console.log('\n✅ Smoke-Test durchgelaufen ohne Exception.');

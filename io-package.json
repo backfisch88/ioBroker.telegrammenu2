@@ -60,6 +60,7 @@
     "authors": ["Henrik <henrik.schoenhofen@icloud.com>"],
     "platform": "Javascript/Node.js",
     "mode": "daemon",
+    "singleton": true,
     "type": "communication",
     "compact": true,
     "connectionType": "local",
