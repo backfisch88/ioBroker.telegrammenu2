@@ -2505,8 +2505,25 @@ async function run() {
         native: {},
     });
     await fakeAdapter.setStateAsync('users.migrationtest.permissions.Alt', { val: true, ack: true });
+
+    // Simuliert einen sehr alten State mit ungültiger Pseudo-Rolle "boolean"
+    // (kein gültiger ioBroker-Rollenname), wie ihn der Repository-Checker
+    // bei der echten Live-Installation gefunden hat.
+    await fakeAdapter.setObjectNotExistsAsync('users.migrationtest.permissions.StaleRole', {
+        type: 'state',
+        common: { name: 'StaleRole', type: 'boolean', role: 'boolean', read: true, write: true },
+        native: {},
+    });
+    await fakeAdapter.setStateAsync('users.migrationtest.permissions.StaleRole', { val: true, ack: true });
+
     const { migrateChannelObjects } = require('../core/states');
     await migrateChannelObjects(fakeAdapter);
+
+    const migratedStaleRole = await fakeAdapter.getObjectAsync('users.migrationtest.permissions.StaleRole');
+    console.log('--- Migration: ungültige Pseudo-Rolle "boolean" korrigiert? ---', migratedStaleRole?.common?.role);
+    if (migratedStaleRole?.common?.role !== 'indicator' || migratedStaleRole?.common?.write !== false) {
+        throw new Error('Migration hat die ungültige Rolle "boolean" nicht auf "indicator" korrigiert!');
+    }
 
     const migratedUsersChannel = await fakeAdapter.getObjectAsync('users');
     const migratedUserChannel = await fakeAdapter.getObjectAsync('users.migrationtest');

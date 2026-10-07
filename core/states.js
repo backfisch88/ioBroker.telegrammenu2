@@ -115,8 +115,16 @@ async function migrateChannelObjects(adapter) {
         .filter(fullId => allObjects[fullId]?.type === 'state' && fullId.startsWith(prefix))
         .map(fullId => fullId.slice(prefix.length));
 
+    // Permission-/Notify-Toggles sind immer "indicator" (boolean, read-only
+    // von außen) - manche sehr alte Installationen (vor dieser Konvention,
+    // oder durch eine fehlerhafte Zwischenversion) haben hier stattdessen
+    // eine ungültige Pseudo-Rolle wie "boolean" stehen, die gar nicht im
+    // offiziellen ioBroker-Rollenkatalog existiert.
+    const INDICATOR_PATH_RE = /^users\.[^.]+\.(?:permissions\.[^.]+|notify\.[^.]+\.[^.]+)$/;
+
     let channelsCreated = 0;
     let writeFlagsFixed = 0;
+    let rolesFixed = 0;
 
     for (const id of stateIds) {
         const segments = id.split('.');
@@ -134,15 +142,22 @@ async function migrateChannelObjects(adapter) {
 
         const obj = allObjects[`${prefix}${id}`];
         const role = obj?.common?.role;
+
+        if (INDICATOR_PATH_RE.test(id) && role !== 'indicator') {
+            await adapter.extendObjectAsync(id, { common: { role: 'indicator', write: false } });
+            rolesFixed++;
+            continue;
+        }
+
         if (READONLY_ROLES.has(role) && obj.common.write !== false) {
             await adapter.extendObjectAsync(id, { common: { write: false } });
             writeFlagsFixed++;
         }
     }
 
-    if (channelsCreated || writeFlagsFixed) {
+    if (channelsCreated || writeFlagsFixed || rolesFixed) {
         adapter.log.info(
-            `Object migration: ${channelsCreated} missing intermediate object(s) added, ${writeFlagsFixed} write flag(s) corrected.`,
+            `Object migration: ${channelsCreated} missing intermediate object(s) added, ${writeFlagsFixed} write flag(s) corrected, ${rolesFixed} stale role(s) corrected.`,
         );
     }
 }
