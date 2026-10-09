@@ -1,7 +1,5 @@
-# Configuration for iobroker-bot-orga/action-automerge-dependabot.
-# Only patch/minor updates to already-approved dependency types are merged
-# automatically; major version bumps always need a manual look.
-mergeMethod: squash
-allowedUpdateTypes:
-  - patch
-  - minor
+# Automatically merge Dependabot patch and minor updates.
+# Major updates require manual review.
+
+- match:
+    update_type: 'semver:minor'
