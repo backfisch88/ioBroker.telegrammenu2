@@ -14,6 +14,7 @@ const { createScriptBridge } = require('./lib/scriptBridge');
 const { importRegistry, listMenuKeys, getMenu, setMenu, resetRegistry, deleteMenus } = require('./lib/registry');
 const { setupEventTriggers, handleEventTriggerStateChange } = require('./lib/eventTriggers');
 const { initBotI18n } = require('./lib/botI18n');
+const { migrateAsciiObjectIds } = require('./lib/migrate');
 const defaultRegistry = require('./lib/defaultRegistry');
 
 class TelegramMenu2 extends utils.Adapter {
@@ -30,6 +31,7 @@ class TelegramMenu2 extends utils.Adapter {
         await initBotI18n(this);
         await migrateChannelObjects(this);
         await migrateCoreStateMetadata(this);
+        await migrateAsciiObjectIds(this);
         await ensureCoreStates(this);
 
         this.telegramInstance = this.config.telegramInstance || 'telegram.0';
@@ -136,13 +138,13 @@ class TelegramMenu2 extends utils.Adapter {
             return { type: bracketMarker[1].toLowerCase(), text: text.slice(bracketMarker[0].length) };
         }
 
-        if (/läuft/i.test(text)) {
+        if (/running|started|\bstart\b/i.test(text)) {
             return { type: 'start', text };
         }
         if (/update/i.test(text)) {
             return { type: 'update', text };
         }
-        if (/fertig/i.test(text)) {
+        if (/done|finished|completed/i.test(text)) {
             return { type: 'done', text };
         }
         return { type: 'message', text };

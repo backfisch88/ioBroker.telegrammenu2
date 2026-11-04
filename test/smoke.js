@@ -1575,7 +1575,7 @@ async function run() {
     if (mainListTexts.some(t => t.includes('Pause for 24h') || t.includes('Resume'))) {
         throw new Error('Pause-Buttons stecken noch direkt in der Hauptliste statt im Untermenü!');
     }
-    if (!mainListTexts.some(t => t.includes('⏸ Pausieren'))) {
+    if (!mainListTexts.some(t => t.includes('⏸ Pause'))) {
         throw new Error('Link zum Pause-Untermenü fehlt in der Hauptliste!');
     }
     if (!mainListTexts.includes('⬅️ Back') || !mainListTexts.includes('🏠 Main Menu')) {
@@ -2492,7 +2492,7 @@ async function run() {
     await fakeAdapter.router.handleIncoming('[123456] 💥 Kaputter Endpunkt');
     const httpErrorMsg = sentMessages.at(-1);
     console.log('--- HTTP-Button Fehlerfall ---', httpErrorMsg?.payload?.text);
-    if (!httpErrorMsg?.payload?.text?.includes('fehlgeschlagen')) {
+    if (!httpErrorMsg?.payload?.text?.includes('HTTP request failed')) {
         throw new Error('HTTP-Button hat den Fehlerfall nicht sauber abgefangen!');
     }
 
@@ -2660,6 +2660,94 @@ async function run() {
                 });
         }
         console.log('--- Keine hartcodierten deutschen Bot-Texte in lib/ und main.js ---');
+    }
+
+    // --- Object ids: ASCII only, unique case-insensitively, plus migration of old ids ---
+    {
+        const { toMenuId, toPermId } = require('../lib/idUtil');
+        const { migrateAsciiObjectIds } = require('../lib/migrate');
+        const { registryStateId } = require('../lib/registry');
+
+        if (toPermId('Geräte') !== 'Geraete' || toPermId('System-Updates') !== 'System-Updates') {
+            throw new Error('toPermId() transliteration is wrong!');
+        }
+        if (toMenuId('Settings_config').toLowerCase() === toMenuId('settings_config').toLowerCase()) {
+            throw new Error('toMenuId() lets keys that differ only by case collide!');
+        }
+        for (const key of ['Menu_Wäsche', 'My.Menu', 'Fußbodenheizung', 'a b', 'Settings_config', 'main']) {
+            const id = toMenuId(key);
+            if (!/^[a-z0-9_-]+$/.test(id) || toMenuId(id) !== id) {
+                throw new Error(`toMenuId("${key}") = "${id}" is not ASCII/lower case/idempotent!`);
+            }
+        }
+
+        // Seed an "old" installation
+        const indexBefore = (await fakeAdapter.getStateAsync('registry._index'))?.val;
+        const seedKeys = ['Menu_Wäsche', 'Settings_config', 'settings_config'];
+        const existingKeys = JSON.parse(indexBefore || '[]');
+        await fakeAdapter.setStateAsync('registry._index', {
+            val: JSON.stringify([...existingKeys, ...seedKeys]),
+            ack: true,
+        });
+        const seed = async (id, val, type = 'state') => {
+            await fakeAdapter.setObjectNotExistsAsync(id, { type, common: { name: id }, native: {} });
+            if (type === 'state') {
+                await fakeAdapter.setStateAsync(id, { val, ack: true });
+            }
+        };
+        await seed('registry.Menu_Wäsche', '{"title":"W"}');
+        await seed('registry.Settings_config', '{"title":"A"}');
+        await seed('registry.settings_config', '{"title":"b"}');
+        await seed('runtime.lastRows.Settings_config', '[]');
+        await seed('runtime.lastRows.settings_config', '[]');
+        await seed('users.u1.permissions.Geräte', true);
+        await seed('users.u1.notify.Wäsche', null, 'channel');
+        await seed('users.u1.notify.Wäsche.done', false);
+
+        await migrateAsciiObjectIds(fakeAdapter);
+
+        const checks = [
+            [registryStateId('Menu_Wäsche'), '{"title":"W"}'],
+            [registryStateId('Settings_config'), '{"title":"A"}'],
+            [registryStateId('settings_config'), '{"title":"b"}'],
+            ['users.u1.permissions.Geraete', true],
+            ['users.u1.notify.Waesche.done', false],
+        ];
+        for (const [id, expected] of checks) {
+            const st = await fakeAdapter.getStateAsync(id);
+            if (!st || st.val !== expected) {
+                throw new Error(`Migration: "${id}" missing or wrong value (${JSON.stringify(st?.val)})!`);
+            }
+        }
+        for (const oldId of [
+            'registry.Menu_Wäsche',
+            'registry.Settings_config',
+            'runtime.lastRows.Settings_config',
+            'users.u1.permissions.Geräte',
+            'users.u1.notify.Wäsche',
+            'users.u1.notify.Wäsche.done',
+        ]) {
+            if (await fakeAdapter.getObjectAsync(oldId)) {
+                throw new Error(`Migration: old object "${oldId}" still exists!`);
+            }
+        }
+
+        // Whole object tree: ASCII only and no ids that differ only by case
+        const allIds = Object.keys(await fakeAdapter.getAdapterObjectsAsync());
+        const seen = new Map();
+        for (const id of allIds) {
+            if (!/^[A-Za-z0-9_.-]+$/.test(id)) {
+                throw new Error(`Object id with non-ASCII characters: ${id}`);
+            }
+            const lower = id.toLowerCase();
+            if (seen.has(lower)) {
+                throw new Error(`Object ids differ only by case: ${seen.get(lower)} / ${id}`);
+            }
+            seen.set(lower, id);
+        }
+        console.log('--- Object ids: ASCII only, case-unique, old ids migrated ---', allIds.length);
+
+        await fakeAdapter.setStateAsync('registry._index', { val: indexBefore || '[]', ack: true });
     }
 
     console.log('\n✅ Smoke-Test durchgelaufen ohne Exception.');

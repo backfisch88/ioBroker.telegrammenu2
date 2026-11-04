@@ -56,6 +56,8 @@ Every Telegram user who messages the bot is auto-registered on first contact wit
 { text: '🔥 Heating', cmd: 'TG:NAV:HEATING', nextMenu: 'heating_main', perm: 'heating' }
 ```
 
+Permission and area names may contain any characters (e.g. umlauts); the object ids use an ASCII version (`Wäsche` → `users.<key>.permissions.Waesche`).
+
 A user only sees/can use this if `users.<theirKey>.permissions.heating` is `true`. The special value `perm: 'admin'` instead checks the user's `role` field directly (`users.<key>.role === 'admin'`) rather than a named permission. Admins get a built-in "👤 Users" auto-menu (`source: 'users'`) to toggle any user's individual permissions and role without touching states by hand.
 
 ## Advanced examples
@@ -151,6 +153,9 @@ No registration call needed — just set the script's ID and the command string 
 - All remaining German texts in the editor tab are now translated via the tab's i18n layer (11 languages)
 - `common.singleton: true` is now set on the adapter level (only one instance can be installed)
 - Extended the unit tests (translation completeness, placeholder consistency, no hard-coded German bot texts)
+- Fixed: remaining German bot texts (HTTP error, auto menu, pause, approve/deny buttons)
+- Changed: object ids are ASCII only and unique regardless of case (`registry.*`, `runtime.lastRows.*`, `users.*.permissions.*`, `users.*.notify.*`); existing objects are migrated on start
+- Changed: type detection from message text uses English keywords (running/started, done/finished/completed); use `[type]` or `::notify::type::` markers for language-independent control
 
 ### 0.2.3
 
