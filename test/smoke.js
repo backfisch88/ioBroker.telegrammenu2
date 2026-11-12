@@ -9,7 +9,6 @@ const path = require('path');
 const { ensureCoreStates } = require('../lib/states');
 const { createNotifyEngine } = require('../lib/notify');
 const { createRouter } = require('../lib/base');
-const { loadModules } = require('../lib/moduleLoader');
 const { importRegistry, setMenu } = require('../lib/registry');
 
 const store = new Map();
@@ -153,11 +152,6 @@ async function run() {
     await fakeAdapter.scriptBridge.init();
 
     fakeAdapter.router = createRouter(fakeAdapter);
-    fakeAdapter.modules = await loadModules(fakeAdapter);
-    console.log(
-        'Module geladen:',
-        fakeAdapter.modules.map(m => m.id),
-    );
 
     // Frischer Zustand wie nach Neuinstallation: KEIN manueller Import.
     // main.js würde hier automatisch defaultRegistry importieren.

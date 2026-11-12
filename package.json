@@ -28,7 +28,6 @@
   "files": [
     "admin/",
     "lib/",
-    "modules/",
     "img/",
     "io-package.json",
     "main.js",

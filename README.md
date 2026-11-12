@@ -5,7 +5,7 @@
 [![NPM version](https://img.shields.io/npm/v/iobroker.telegrammenu2.svg)](https://www.npmjs.com/package/iobroker.telegrammenu2)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-A self-contained Telegram bot adapter for ioBroker, built around a **visual, no-code menu editor**. Design your bot's menus, buttons, and notifications by dragging nodes on a canvas — no scripting required for most use cases.
+A self-contained Telegram bot adapter for ioBroker, built around a **visual, no-code menu editor**. Design your bot's menus, buttons, and notifications by dragging nodes on a canvas - no scripting required for most use cases.
 
 ![Node editor example](img/screenshot-node-editor.jpg)
 
@@ -15,28 +15,28 @@ Building a Telegram bot for your smart home usually means writing (and maintaini
 
 ## Features
 
-- **Visual node editor** — a full [React Flow](https://reactflow.dev/) graph editor running as its own ioBroker Admin tab. Build your menu tree, wire up buttons, connect to a live ioBroker instance to load/save, or export/import as JSON.
+- **Visual node editor** - a full [React Flow](https://reactflow.dev/) graph editor running as its own ioBroker Admin tab. Build your menu tree, wire up buttons, connect to a live ioBroker instance to load/save, or export/import as JSON.
 - **Six button types**, all wired up in the editor without code:
-  - **Menu** — a container of buttons, optionally with a dynamic title (from a script or a live datapoint), an image, or a permission requirement
-  - **Toggle / Number / Text input** — bound directly to a datapoint (on/off, fixed value, numeric keypad, or free-text entry)
-  - **Action** — the standard back / main-menu / cancel navigation buttons
-  - **Command** — calls a script (via `onMessage`) or fires an HTTP request, with optional Basic Auth
-  - **Multi-status** — a single button that cycles through more than two states, each with its own emoji, label, and target datapoint/value
-- **Auto-generated menus** — user management, notification preferences, and notification pausing are built in and update themselves automatically; no manual button wiring needed
-- **Percent-step / number-range pickers** — pick a value from an inline keyboard (with the current value marked ✅) or tap "custom value" to enter one via a real numeric keypad, including decimals
+  - **Menu** - a container of buttons, optionally with a dynamic title (from a script or a live datapoint), an image, or a permission requirement
+  - **Toggle / Number / Text input** - bound directly to a datapoint (on/off, fixed value, numeric keypad, or free-text entry)
+  - **Action** - the standard back / main-menu / cancel navigation buttons
+  - **Command** - calls a script (via `onMessage`) or fires an HTTP request, with optional Basic Auth
+  - **Multi-status** - a single button that cycles through more than two states, each with its own emoji, label, and target datapoint/value
+- **Auto-generated menus** - user management, notification preferences, and notification pausing are built in and update themselves automatically; no manual button wiring needed
+- **Percent-step / number-range pickers** - pick a value from an inline keyboard (with the current value marked ✅) or tap "custom value" to enter one via a real numeric keypad, including decimals
 
   ![Percent-step picker example](img/screenshot-value-picker.jpg)
 
-- **Message templates** — `{{datapoint.id}}` placeholders resolve to live values anywhere in a button's text or confirmation message, including inline math (`{{datapoint.id / 60}}`) and automatic boolean/date formatting
-- **Status-dependent icons** — a menu or button's emoji can change based on a datapoint's current value/rules, including comparison operators (see below)
-- **Permission system** — per-button/per-menu permissions, a user approval gate for new Telegram users, and an admin menu to manage roles and rights (see "Users & Permissions" below)
-- **Notification engine** — `sendTo('telegrammenu2.0', 'notify', { area, type, text })` with per-area/per-type user preferences, grouping of rapid-fire notifications, snooze/pause per area, and optional HTML formatting or link-preview suppression
-- **Event listeners** — watch any datapoint and automatically push an interactive menu to every authorized user when a condition matches (value, comparison operator, optional `ack` check)
-- **Script bridge** — any `javascript.0` script can register an `onMessage` handler and return `{ text, html, noPreview, menuKey, awaitReply }` to answer a button press, ask a follow-up question, or jump to another menu
+- **Message templates** - `{{datapoint.id}}` placeholders resolve to live values anywhere in a button's text or confirmation message, including inline math (`{{datapoint.id / 60}}`) and automatic boolean/date formatting
+- **Status-dependent icons** - a menu or button's emoji can change based on a datapoint's current value/rules, including comparison operators (see below)
+- **Permission system** - per-button/per-menu permissions, a user approval gate for new Telegram users, and an admin menu to manage roles and rights (see "Users & Permissions" below)
+- **Notification engine** - `sendTo('telegrammenu2.0', 'notify', { area, type, text })` with per-area/per-type user preferences, grouping of rapid-fire notifications, snooze/pause per area, and optional HTML formatting or link-preview suppression
+- **Event listeners** - watch any datapoint and automatically push an interactive menu to every authorized user when a condition matches (value, comparison operator, optional `ack` check)
+- **Script bridge** - any `javascript.0` script can register an `onMessage` handler and return `{ text, html, noPreview, menuKey, awaitReply }` to answer a button press, ask a follow-up question, or jump to another menu
 
 ## Global settings
 
-A handful of settings apply adapter-wide and live as plain fields on the **`main`** menu (the one with `menuKey: "main"`) — set them via the "⚙️ Global Settings" section on that node in the editor:
+A handful of settings apply adapter-wide and live as plain fields on the **`main`** menu (the one with `menuKey: "main"`) - set them via the "Global settings" section on that node in the editor:
 
 | Field | Default | Effect |
 |---|---|---|
@@ -50,7 +50,7 @@ A handful of settings apply adapter-wide and live as plain fields on the **`main
 
 ## Users & Permissions
 
-Every Telegram user who messages the bot is auto-registered on first contact with role `guest` and `approved: false` — they see a "waiting for approval" message and nothing else until an admin approves them (via an inline button that appears automatically in the admins' chat). Once approved, permissions are per-user boolean flags (`users.<key>.permissions.<name>`), checked against whatever string you put in a menu's or button's `perm` field:
+Every Telegram user who messages the bot is auto-registered on first contact with role `guest` and `approved: false` - they see a "waiting for approval" message and nothing else until an admin approves them (via an inline button that appears automatically in the admins' chat). Once approved, permissions are per-user boolean flags (`users.<key>.permissions.<name>`), checked against whatever string you put in a menu's or button's `perm` field:
 
 ```javascript
 { text: '🔥 Heating', cmd: 'TG:NAV:HEATING', nextMenu: 'heating_main', perm: 'heating' }
@@ -62,7 +62,7 @@ A user only sees/can use this if `users.<theirKey>.permissions.heating` is `true
 
 ## Advanced examples
 
-**Custom confirmation text** on a percent-step/number-range menu (`confirmMessage` field, separate from the menu's normal opening text) — `{value}` and `{unit}` are substituted with whatever was just set:
+**Custom confirmation text** on a percent-step/number-range menu (`confirmMessage` field, separate from the menu's normal opening text) - `{value}` and `{unit}` are substituted with whatever was just set:
 
 ```
 🌡️ Target temperature set to {value}{unit}.
@@ -85,7 +85,7 @@ sendTo('telegrammenu2.0', 'notify', {
 trigger: { datapoint: '0_userdata.0.Heating.error', value: 'true', ackOnly: true }
 ```
 
-Pushes that menu to every user with permission for it, the moment the datapoint reports `true` with `ack: true`. `value` supports comparison operators too (`>25`, `<=10`, etc.) — used the same way for status-dependent icons:
+Pushes that menu to every user with permission for it, the moment the datapoint reports `true` with `ack: true`. `value` supports comparison operators too (`>25`, `<=10`, etc.) - used the same way for status-dependent icons:
 
 ```javascript
 icon: {
@@ -105,7 +105,7 @@ The adapter listens to your existing `telegram.x` instance's incoming-message st
 - **handles it directly** (writes to a datapoint, shows a submenu, runs an HTTP request), or
 - **calls out to a script** you registered via `onMessage`, and sends back whatever text/menu it returns.
 
-Menus are stored as plain JSON objects, one per key, under the adapter's own `registry.*` states — this is exactly what the visual editor reads and writes. You can also hand-edit or import this JSON directly (see `registryExample.json`).
+Menus are stored as plain JSON objects, one per key, under the adapter's own `registry.*` states - this is exactly what the visual editor reads and writes. You can also hand-edit or import this JSON directly (see `registryExample.json`).
 
 ## Quick start
 
@@ -114,9 +114,9 @@ Menus are stored as plain JSON objects, one per key, under the adapter's own `re
 3. Add a **Menu** node, wire up some **Toggle**/**Command** buttons under it, hit **"Save to ioBroker"**.
 4. Message your bot with `/start`.
 
-See `registryExample.json` for a worked example (a weather button with a message template, a sub-menu with datapoint-bound controls, and a status-dependent icon) — import it via the editor's "Import JSON" button to try it out.
+See `registryExample.json` for a worked example (a weather button with a message template, a sub-menu with datapoint-bound controls, and a status-dependent icon) - import it via the editor's "Import JSON" button to try it out.
 
-A sub-menu — reached via the main menu, with a "back"/"main menu" combo button at the end:
+A sub-menu - reached via the main menu, with a "back"/"main menu" combo button at the end:
 
 ![Example sub-menu in Telegram](img/screenshot-submenu-verbrauch.jpg)
 
@@ -136,7 +136,7 @@ onMessage('TG:WEATHER:SHOW', (data, callback) => {
 });
 ```
 
-No registration call needed — just set the script's ID and the command string on the button in the editor. The callback can also return `html: true`, `noPreview: true`, `awaitReply: true` (to ask a follow-up question), or `menuKey` (to jump straight into another menu).
+No registration call needed - just set the script's ID and the command string on the button in the editor. The callback can also return `html: true`, `noPreview: true`, `awaitReply: true` (to ask a follow-up question), or `menuKey` (to jump straight into another menu).
 
 ## Requirements
 
@@ -148,14 +148,15 @@ No registration call needed — just set the script's ID and the command string 
 
 ### **WORK IN PROGRESS**
 
-- Moved the JavaScript modules from `core/` to the usual `lib/` directory
-- All remaining German texts sent to Telegram users are now translated via `botI18n.js` (11 languages); the numpad cancel/done buttons work with every language
-- All remaining German texts in the editor tab are now translated via the tab's i18n layer (11 languages)
-- `common.singleton: true` is now set on the adapter level (only one instance can be installed)
-- Extended the unit tests (translation completeness, placeholder consistency, no hard-coded German bot texts)
-- Fixed: remaining German bot texts (HTTP error, auto menu, pause, approve/deny buttons)
-- Changed: object ids are ASCII only and unique regardless of case (`registry.*`, `runtime.lastRows.*`, `users.*.permissions.*`, `users.*.notify.*`); existing objects are migrated on start
-- Changed: type detection from message text uses English keywords (running/started, done/finished/completed); use `[type]` or `::notify::type::` markers for language-independent control
+- New: `info.connection` mirrors the telegram instance connection
+- New: light and dark theme in the editor, calmer look
+- Changed: object ids are ASCII only and unique regardless of case, existing objects are migrated on start
+- Changed: notification types are shown translated
+- Changed: message type detection uses English keywords, `[type]` and `::notify::type::` markers still work
+- Changed: `{status}` gets a space before it
+- Changed: `common.singleton` is set, code moved from `core/` to `lib/`
+- Fixed: remaining German texts in bot and editor (11 languages), back/main menu language
+- Removed: unused plugin loader
 
 ### 0.2.3
 

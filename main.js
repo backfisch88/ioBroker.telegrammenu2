@@ -9,7 +9,6 @@ const {
 } = require('./lib/states');
 const { createNotifyEngine } = require('./lib/notify');
 const { createRouter } = require('./lib/base');
-const { loadModules } = require('./lib/moduleLoader');
 const { createScriptBridge } = require('./lib/scriptBridge');
 const { importRegistry, listMenuKeys, getMenu, setMenu, resetRegistry, deleteMenus } = require('./lib/registry');
 const { setupEventTriggers, handleEventTriggerStateChange } = require('./lib/eventTriggers');
@@ -36,8 +35,8 @@ class TelegramMenu2 extends utils.Adapter {
 
         this.telegramInstance = this.config.telegramInstance || 'telegram.0';
 
-        // notify() ist ab jetzt eine ganz normale Methode auf dem Adapter, kein
-        // sendTo-Umweg mehr nötig für Module, die im selben Prozess laufen.
+        // notify() is a plain method on the adapter now, no sendTo detour needed
+        // for code running in the same process.
         const notifyEngine = createNotifyEngine(this);
         this.notify = (area, type, text, extra) => notifyEngine.send(area, type, text, extra);
         this.notify.registerAreas = notifyEngine.registerAreas;
@@ -56,7 +55,6 @@ class TelegramMenu2 extends utils.Adapter {
         this.notify.deleteArea = notifyEngine.deleteArea;
         this.notify.getAllAreasFull = notifyEngine.getAllAreasFull;
         this.notify.isOverride = notifyEngine.isOverride;
-        this.notify.deleteArea = notifyEngine.deleteArea;
         this._notifyEngine = notifyEngine;
         await notifyEngine.init();
 
@@ -64,11 +62,6 @@ class TelegramMenu2 extends utils.Adapter {
         await this.scriptBridge.init();
 
         this.router = createRouter(this);
-
-        // Fachmodule aus modules/ laden (Plugin-System) – neue Datei rein,
-        // fertig, kein Core-Code anfassen.
-        this.modules = await loadModules(this);
-        this.log.info(`${this.modules.length} module(s) loaded: ${this.modules.map(m => m.id).join(', ') || '-'}`);
 
         const existingMenus = await listMenuKeys(this);
         if (!existingMenus.length) {
@@ -78,9 +71,9 @@ class TelegramMenu2 extends utils.Adapter {
             );
         }
 
-        // Läuft bei JEDEM Start (nicht nur beim ersten) - stellt sicher, dass
-        // neu hinzugekommene Standard-Untermenüs auch auf bestehenden Installationen
-        // auftauchen, ohne die restliche Registry anzufassen/zu überschreiben.
+        // Runs on EVERY start (not only the first one) - makes sure newly added
+        // default submenus also appear on existing installations without touching
+        // or overwriting the rest of the registry.
         if (!existingMenus.includes('settings_notify_pause')) {
             await setMenu(this, 'settings_notify_pause', defaultRegistry.settings_notify_pause);
             this.log.info('New sub-menu "settings_notify_pause" added.');
@@ -88,11 +81,28 @@ class TelegramMenu2 extends utils.Adapter {
 
         await this.subscribeForeignStatesAsync(`${this.telegramInstance}.communicate.request`);
 
-        // Event-Listener -> automatisches Menü: Registry nach menuDef.trigger
-        // durchsuchen und die entsprechenden Datenpunkte abonnieren. Zusätzlich
-        // eigene registry.*-States abonnieren, damit ein im Editor gespeicherter
-        // (neuer/geänderter) Trigger sofort wirksam wird, ohne den Adapter neu
-        // starten zu müssen.
+        // Mirror the connection state of the telegram instance
+        await this.setObjectNotExistsAsync('info', { type: 'channel', common: { name: 'Information' }, native: {} });
+        await this.setObjectNotExistsAsync('info.connection', {
+            type: 'state',
+            common: {
+                name: 'Telegram instance connected',
+                type: 'boolean',
+                role: 'indicator.connected',
+                read: true,
+                write: false,
+                def: false,
+            },
+            native: {},
+        });
+        await this.subscribeForeignStatesAsync(`${this.telegramInstance}.info.connection`);
+        const tgConn = await this.getForeignStateAsync(`${this.telegramInstance}.info.connection`);
+        await this.setStateAsync('info.connection', { val: !!tgConn?.val, ack: true });
+
+        // Event listener -> automatic menu: scan the registry for menuDef.trigger
+        // and subscribe the matching datapoints. Also subscribe to our own registry.*
+        // states so a trigger saved in the editor takes effect immediately without
+        // restarting the adapter.
         await setupEventTriggers(this);
         await this.subscribeStatesAsync('registry.*');
 
@@ -100,6 +110,10 @@ class TelegramMenu2 extends utils.Adapter {
     }
 
     onStateChange(id, state) {
+        if (id === `${this.telegramInstance}.info.connection`) {
+            this.setState('info.connection', { val: !!state?.val, ack: true });
+            return;
+        }
         if (id.startsWith(`${this.namespace}.registry.`)) {
             setupEventTriggers(this).catch(e =>
                 this.log.warn(`setupEventTriggers (rescan after registry change): ${e.message}`),
@@ -118,15 +132,14 @@ class TelegramMenu2 extends utils.Adapter {
         ).catch(e => this.log.warn(`Event listener processing for ${id}: ${e.message}`));
     }
 
-    // Übergangs-Bridge: solange noch nicht-portierte Skripte im JS-Adapter
-    // laufen, können die per sendTo('telegrammenu2.0', 'notify', {...}) senden.
-    // Module, die schon in diesem Adapter laufen, rufen stattdessen direkt
-    // this.notify(...) auf – kein sendTo nötig.
-    // Erkennt den Event-Typ aus dem Nachrichtentext, falls kein eigenes Feld
-    // dafür mitgeschickt wird (wie bei LaundryLens/washdata), und entfernt die
-    // Markierung aus dem Text, der tatsächlich in Telegram landet.
-    // Reihenfolge: ::notify::TYPE:: (empfohlen, in LaundryLens' eigenen
-    // Nachricht-Vorlagen voranstellen) > [TYPE] > Stichwort-Fallback.
+    // Transition bridge: scripts running in the JavaScript adapter can send via
+    // sendTo('telegrammenu2.0', 'notify', {...}). Code inside this adapter calls
+    // this.notify(...) directly instead.
+    // Detects the event type from the message text if no dedicated field is sent
+    // (as LaundryLens/washdata do) and strips the marker from the text that
+    // actually reaches Telegram.
+    // Order: ::notify::TYPE:: (recommended, prepend it in LaundryLens' own
+    // message templates) > [TYPE] > keyword fallback.
     detectTypeFromText(text) {
         const notifyMarker = text.match(/^\s*::notify::(\w+)::\s*/i);
         if (notifyMarker) {
@@ -155,9 +168,9 @@ class TelegramMenu2 extends utils.Adapter {
             return;
         }
 
-        // Skript-Bridge: ein Skript meldet sich EINMAL selbst an (z. B. beim
-        // eigenen Start) - "ich beantworte alle Commands mit diesem Präfix,
-        // brauche dafür Recht X, und nutze diese Benachrichtigungs-Bereiche".
+        // Script bridge: a script registers itself ONCE (e.g. on its own start) -
+        // "I answer all commands with this prefix, need permission X for it and use
+        // these notification areas".
         // sendTo('telegrammenu2.0', 'registerScriptCommand', {
         //   cmdPrefix: 'TG:EXAMPLE', scriptId: 'script.js.Telegram.myScript',
         //   perm: 'example', notifyAreas: { example: ['info'] }
@@ -170,7 +183,7 @@ class TelegramMenu2 extends utils.Adapter {
                         this.sendTo(
                             obj.from,
                             obj.command,
-                            { ok: false, error: 'cmdPrefix und scriptId erforderlich' },
+                            { ok: false, error: 'cmdPrefix and scriptId are required' },
                             obj.callback,
                         );
                     }
@@ -198,11 +211,11 @@ class TelegramMenu2 extends utils.Adapter {
             return;
         }
 
-        // Skript löst SELBST (ohne vorherigen Knopfdruck) eine Rückfrage aus -
-        // z. B. weil ein Gerätestatus sich geändert hat, nicht weil jemand
-        // getippt hat. sendTo('telegrammenu2.0', 'awaitReply', {
+        // A script itself (without a previous button press) triggers a follow-up
+        // question - e.g. because a device state changed, not because someone tapped.
+        // sendTo('telegrammenu2.0', 'awaitReply', {
         //   user: chatId, scriptId: 'balkon', cmd: 'CalibHeight', text: '📏 ...',
-        //   menuKey: 'balcony_calib' (optional, für die Antwort danach)
+        //   menuKey: 'balcony_calib' (optional, used for the reply afterwards)
         // })
         if (obj.command === 'awaitReply') {
             const { user, scriptId, cmd, text, menuKey, keyboard } = obj.message || {};
@@ -212,7 +225,7 @@ class TelegramMenu2 extends utils.Adapter {
                         this.sendTo(
                             obj.from,
                             obj.command,
-                            { ok: false, error: 'user, scriptId und cmd erforderlich' },
+                            { ok: false, error: 'user, scriptId and cmd are required' },
                             obj.callback,
                         );
                     }
@@ -241,14 +254,14 @@ class TelegramMenu2 extends utils.Adapter {
             return;
         }
 
-        // Kompatibilitäts-Shim: Adapter wie LaundryLens/washdata erkennen jeden
-        // Adapter-Namen, der mit "telegram" beginnt, per String-Vergleich als
-        // kompatibel (siehe washdata/main.js) - und schicken dann OHNE eigenes
-        // command-Feld: entweder einen nackten String, oder {text, chatId}.
+        // Compatibility shim: adapters like LaundryLens/washdata treat every adapter
+        // name starting with "telegram" as compatible (string comparison, see
+        // washdata/main.js) and then send WITHOUT their own command field: either a
+        // bare string or {text, chatId}.
         if (!obj.command || obj.command === 'send') {
-            // obj.from sieht bei ioBroker so aus: "system.adapter.laundrylens.0" -
-            // der reine Adaptername steckt im DRITTEN Segment, nicht im ersten
-            // (das ist immer nur das Wort "system").
+            // obj.from looks like "system.adapter.laundrylens.0" in ioBroker -
+            // the plain adapter name is the THIRD segment, not the first
+            // (which is always just the word "system").
             const fromParts = (obj.from || '').split('.');
             const fromAdapter =
                 fromParts[0] === 'system' && fromParts[1] === 'adapter' && fromParts[2]
@@ -310,10 +323,9 @@ class TelegramMenu2 extends utils.Adapter {
         }
 
         if (obj.command === 'notify') {
-            // Datei-Anhang: "file" gesetzt = text wird automatisch zur
-            // Bildunterschrift (bei einer Datei zeigt Telegram sowieso nur die
-            // Caption an, nie zusätzlichen separaten Text - daher kein eigenes
-            // "caption"-Feld mehr nötig, ein Parameter weniger im sendTo-Block).
+            // File attachment: with "file" set, text automatically becomes the caption
+            // (Telegram only shows the caption for a file, never a separate text, so no
+            // dedicated "caption" field is needed - one parameter less in sendTo).
             const { area, type, text, file, extra } = obj.message || {};
             const fileExtra = file ? { file, caption: text } : extra;
             this.notify(area, type, text, fileExtra);
@@ -323,8 +335,8 @@ class TelegramMenu2 extends utils.Adapter {
             return;
         }
 
-        // Positionen der Knoten im Editor-Tab speichern/laden, damit sich der
-        // Graph beim erneuten Öffnen nicht jedes Mal neu anordnet.
+        // Save/load node positions of the editor tab so the graph is not
+        // rearranged every time it is reopened.
         if (obj.command === 'saveLayout') {
             const { layout } = obj.message || {};
             (async () => {
@@ -353,7 +365,7 @@ class TelegramMenu2 extends utils.Adapter {
             return;
         }
 
-        // Gezielt einzelne Menüs löschen (nicht die ganze Registry wie resetRegistry) -
+        // Delete individual menus (not the whole registry like resetRegistry) -
         // sendTo('telegrammenu2.0', 'deleteRegistryMenus', { keys: ['test_menu', ...] })
         if (obj.command === 'deleteRegistryMenus') {
             const { keys } = obj.message || {};
@@ -369,8 +381,8 @@ class TelegramMenu2 extends utils.Adapter {
             return;
         }
 
-        // Räumt alle registry.*-States weg (z. B. Leichen aus früheren Tests) -
-        // sendTo('telegrammenu2.0', 'resetRegistry') - danach neu importieren.
+        // Removes all registry.* states (e.g. leftovers from earlier tests) -
+        // sendTo('telegrammenu2.0', 'resetRegistry') - then import again.
         if (obj.command === 'resetRegistry') {
             (async () => {
                 const removed = await resetRegistry(this);
@@ -387,8 +399,8 @@ class TelegramMenu2 extends utils.Adapter {
             return;
         }
 
-        // Komplette Registry für den Editor-Tab abrufen (automatisches Laden
-        // beim Öffnen, statt immer mit dem Demo-Graphen zu starten).
+        // Fetch the complete registry for the editor tab (automatic load on open
+        // instead of always starting with the demo graph).
         if (obj.command === 'getRegistry') {
             (async () => {
                 try {
@@ -413,8 +425,8 @@ class TelegramMenu2 extends utils.Adapter {
             return;
         }
 
-        // Live-Bereichsliste für den Editor-Tab abrufen (nicht nur, was dort
-        // manuell eingetragen wurde): sendTo('telegrammenu2.0', 'getNotifyAreas')
+        // Fetch the live area list for the editor tab (not only what is
+        // was entered manually): sendTo('telegrammenu2.0', 'getNotifyAreas')
         if (obj.command === 'getNotifyAreas') {
             const areas = this.notify.getValidAreas();
             if (obj.callback) {
@@ -423,9 +435,9 @@ class TelegramMenu2 extends utils.Adapter {
             return;
         }
 
-        // Noch nicht freigeschaltete, automatisch entdeckte Bereiche (z. B.
-        // Testnachrichten fremder Adapter) - tauchen erst nach approveNotifyArea
-        // im "Benachrichtigungen"-Menü auf.
+        // Areas that were discovered automatically but are not approved yet (e.g.
+        // test messages of foreign adapters) - they only show up in the
+        // "Notifications" menu after approveNotifyArea.
         if (obj.command === 'getPendingNotifyAreas') {
             const areas = this.notify.getPendingAreas();
             if (obj.callback) {
@@ -445,7 +457,7 @@ class TelegramMenu2 extends utils.Adapter {
             return;
         }
 
-        // Markiert area+type als "kann nicht abgeschaltet werden" (Override) -
+        // Marks area+type as "cannot be switched off" (override) -
         // sendTo('telegrammenu2.0', 'setNotifyOverride', {area, type, override: true})
         if (obj.command === 'setNotifyOverride') {
             const { area, type, override } = obj.message || {};
@@ -458,9 +470,9 @@ class TelegramMenu2 extends utils.Adapter {
             return;
         }
 
-        // Voller Datensatz aller Bereiche (Typen, Anzeigenamen, Override, Freigabe)
-        // für den Editor-Tab, damit beim Nachladen wirklich alles wiederhergestellt
-        // wird statt nur Bereich+Typen.
+        // Full record of all areas (types, display names, override, approval)
+        // for the editor tab, so everything is really restored on reload
+        // instead of only area + types.
         if (obj.command === 'getNotifyAreasFull') {
             const areas = this.notify.getAllAreasFull();
             if (obj.callback) {
@@ -469,7 +481,7 @@ class TelegramMenu2 extends utils.Adapter {
             return;
         }
 
-        // Bereich komplett löschen (nicht nur ausblenden) -
+        // Delete an area completely (not just hide it) -
         // sendTo('telegrammenu2.0', 'deleteNotifyArea', {area})
         if (obj.command === 'deleteNotifyArea') {
             const { area } = obj.message || {};
@@ -482,7 +494,7 @@ class TelegramMenu2 extends utils.Adapter {
             return;
         }
 
-        // Anzeigename für den BEREICH selbst setzen (z. B. "system" -> "Tests") -
+        // Set the display name for the AREA itself (e.g. "system" -> "Tests") -
         // sendTo('telegrammenu2.0', 'setNotifyAreaLabel', {area, label})
         if (obj.command === 'setNotifyAreaLabel') {
             const { area, label } = obj.message || {};
@@ -495,7 +507,7 @@ class TelegramMenu2 extends utils.Adapter {
             return;
         }
 
-        // Anzeigename statt technischem Typ (z. B. "priceChange") setzen -
+        // Set a display name instead of the technical type (e.g. "priceChange") -
         // sendTo('telegrammenu2.0', 'setNotifyTypeLabel', {area, type, label})
         if (obj.command === 'setNotifyTypeLabel') {
             const { area, type, label } = obj.message || {};
@@ -508,8 +520,8 @@ class TelegramMenu2 extends utils.Adapter {
             return;
         }
 
-        // Notify-Bereiche direkt aus dem Editor-Tab eintragen (grafisch statt
-        // Objekte-Editor): sendTo('telegrammenu2.0', 'registerNotifyAreas', { area: ['typ1','typ2'], ... })
+        // Register notify areas directly from the editor tab (graphical instead of
+        // object editor): sendTo('telegrammenu2.0', 'registerNotifyAreas', { area: ['type1','type2'], ... })
         if (obj.command === 'registerNotifyAreas') {
             const areasMap = obj.message || {};
             (async () => {
@@ -543,10 +555,10 @@ class TelegramMenu2 extends utils.Adapter {
             return;
         }
 
-        // Fängt alles ab, was wir (noch) nicht kennen - z. B. Adapter wie
-        // LaundryLens, die telegrammenu2 als "telegram-kompatibel" erkennen und
-        // in einem eigenen Format senden. Zeigt im Log genau, was ankommt, damit
-        // wir den passenden Handler dafür bauen können, statt zu raten.
+        // Catches everything we do not know (yet) - e.g. adapters like LaundryLens
+        // that detect telegrammenu2 as "telegram-compatible" and send in their own
+        // format. The log shows exactly what arrives, so a matching handler can be
+        // built instead of guessing.
         this.log.info(`Unknown/unhandled message command: "${obj.command}" - content: ${JSON.stringify(obj.message)}`);
         if (obj.callback) {
             this.sendTo(
@@ -560,9 +572,10 @@ class TelegramMenu2 extends utils.Adapter {
 
     async onUnload(callback) {
         try {
-            // Wartende (gebündelte) Nachrichten SOFORT ausliefern statt nur zu
-            // verwerfen - sonst geht z. B. der Balkon-Tagesbericht verloren, wenn
-            // ein Adapter-Update zufällig genau in die 15-Sekunden-Sammelphase fällt.
+            await this.setStateAsync('info.connection', { val: false, ack: true });
+            // Deliver pending (grouped) messages IMMEDIATELY instead of discarding them
+            // - otherwise e.g. the balcony daily report is lost when an adapter update
+            // happens to fall into the 15-second collection window.
             if (this._notifyEngine) {
                 await this._notifyEngine.flushAllPending();
             }
