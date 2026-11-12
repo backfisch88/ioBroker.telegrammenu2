@@ -1,7 +1,7 @@
 {
     "common": {
         "name": "telegrammenu2",
-        "version": "0.2.3",
+        "version": "0.2.5",
         "messagebox": true,
         "titleLang": {
             "en": "Telegram Menu 2",
@@ -17,6 +17,19 @@
             "zh-cn": "Telegram Menu 2"
         },
         "news": {
+            "0.2.5": {
+                "en": "Light/dark editor theme, info.connection, ASCII-only object ids with migration, translated texts, fixes.",
+                "de": "Heller/dunkler Editor, info.connection, ASCII-Objekt-IDs mit Migration, übersetzte Texte, Fehlerbehebungen.",
+                "ru": "Светлая/тёмная тема редактора, info.connection, ASCII-идентификаторы объектов с миграцией, переведённые тексты, исправления.",
+                "pt": "Tema claro/escuro no editor, info.connection, IDs de objeto ASCII com migração, textos traduzidos, correções.",
+                "nl": "Licht/donker thema in de editor, info.connection, ASCII-object-ID's met migratie, vertaalde teksten, fixes.",
+                "fr": "Thème clair/sombre de l'éditeur, info.connection, ID d'objets ASCII avec migration, textes traduits, corrections.",
+                "it": "Tema chiaro/scuro dell'editor, info.connection, ID oggetto ASCII con migrazione, testi tradotti, correzioni.",
+                "es": "Tema claro/oscuro del editor, info.connection, IDs de objeto ASCII con migración, textos traducidos, correcciones.",
+                "pl": "Jasny/ciemny motyw edytora, info.connection, identyfikatory obiektów ASCII z migracją, przetłumaczone teksty, poprawki.",
+                "uk": "Світла/темна тема редактора, info.connection, ASCII-ідентифікатори об'єктів з міграцією, перекладені тексти, виправлення.",
+                "zh-cn": "编辑器浅色/深色主题、info.connection、带迁移的 ASCII 对象 ID、已翻译文本及修复。"
+            },
             "0.2.3": {
                 "en": "Repository maintenance: npm Trusted Publishing (OIDC) configured, no functional changes.",
                 "de": "Repository-Pflege: npm Trusted Publishing (OIDC) eingerichtet, keine funktionalen Änderungen.",
@@ -57,7 +70,9 @@
             "uk": "Автономна система меню Telegram: маршрутизатор, рушій сповіщень, права користувачів та підключувані модулі.",
             "zh-cn": "独立的 Telegram 菜单系统：路由器、通知引擎、用户权限及可插拔的领域模块。"
         },
-        "authors": ["Henrik <henrik.schoenhofen@icloud.com>"],
+        "authors": [
+            "Henrik <henrik.schoenhofen@icloud.com>"
+        ],
         "platform": "Javascript/Node.js",
         "mode": "daemon",
         "singleton": true,
@@ -70,7 +85,11 @@
         "loglevel": "info",
         "extIcon": "https://raw.githubusercontent.com/backfisch88/ioBroker.telegrammenu2/main/admin/telegrammenu2.png",
         "readme": "https://github.com/backfisch88/ioBroker.telegrammenu2/blob/main/README.md",
-        "keywords": ["telegram", "menu", "notify"],
+        "keywords": [
+            "telegram",
+            "menu",
+            "notify"
+        ],
         "licenseInformation": {
             "type": "free",
             "license": "MIT"

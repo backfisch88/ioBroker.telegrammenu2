@@ -146,7 +146,7 @@ No registration call needed - just set the script's ID and the command string on
 
 ## Changelog
 
-### **WORK IN PROGRESS**
+### 0.2.5
 
 - New: `info.connection` mirrors the telegram instance connection
 - New: light and dark theme in the editor, calmer look
