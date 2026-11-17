@@ -141,10 +141,23 @@ No registration call needed - just set the script's ID and the command string on
 ## Requirements
 
 - Node.js >= 22 (uses the built-in `fetch` for the HTTP-request buttons)
+- ioBroker Admin >= 8 (the editor is a JSON tab with a custom component)
 - js-controller >= 6.0.11
 - An existing, configured `iobroker.telegram` instance
 
+## Development
+
+The editor source is in `src-admin`. `npm run build` builds it into `admin/custom`.
+
 ## Changelog
+
+### **WORK IN PROGRESS**
+- New: object browser for datapoint fields and placeholders in the editor
+- Changed: editor is built from source (`src-admin`) as a JSON tab with a custom component, requires Admin 8
+- Changed: editor follows the Admin theme
+- Fixed: objects with `common.custom` settings are no longer deleted (menu reset/delete, user deny, ID migration); the migration carries the settings over to the new ID
+- Fixed: registry changes made by the adapter itself no longer trigger a redundant trigger rescan
+- Changed: updated `@iobroker/testing` to 6.3.2
 
 ### 0.2.5
 

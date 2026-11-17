@@ -2,3 +2,9 @@ node_modules/
 *.log
 .DS_Store
 .commitinfo
+
+# editor build
+src-admin/node_modules/
+src-admin/build/
+src-admin/build-harness/
+src-admin/.__mf__temp/

@@ -109,15 +109,25 @@ class TelegramMenu2 extends utils.Adapter {
         this.log.info(`telegramMenu2 ready, listening on ${this.telegramInstance}.communicate.request`);
     }
 
+    // Rebuilds the datapoint -> menu mapping after the registry changed
+    rescanTriggers() {
+        setupEventTriggers(this).catch(e =>
+            this.log.warn(`setupEventTriggers (rescan after registry change): ${e.message}`),
+        );
+    }
+
     onStateChange(id, state) {
         if (id === `${this.telegramInstance}.info.connection`) {
             this.setState('info.connection', { val: !!state?.val, ack: true });
             return;
         }
         if (id.startsWith(`${this.namespace}.registry.`)) {
-            setupEventTriggers(this).catch(e =>
-                this.log.warn(`setupEventTriggers (rescan after registry change): ${e.message}`),
-            );
+            // Own writes (ack=true) rescan explicitly after import/delete, see rescanTriggers().
+            // Only changes from outside (ack=false) and deleted states (null) are handled here.
+            if (state?.ack) {
+                return;
+            }
+            this.rescanTriggers();
             return;
         }
         if (!state || state.val === undefined || state.val === null) {
@@ -371,6 +381,7 @@ class TelegramMenu2 extends utils.Adapter {
             const { keys } = obj.message || {};
             (async () => {
                 const removed = await deleteMenus(this, Array.isArray(keys) ? keys : []);
+                this.rescanTriggers();
                 if (removed.length) {
                     this.log.info(`Menus removed (no longer present in editor): ${removed.join(', ')}`);
                 }
@@ -386,6 +397,7 @@ class TelegramMenu2 extends utils.Adapter {
         if (obj.command === 'resetRegistry') {
             (async () => {
                 const removed = await resetRegistry(this);
+                this.rescanTriggers();
                 this.log.info(`Registry reset - removed: ${removed.join(', ') || '(empty)'}`);
                 if (obj.callback) {
                     this.sendTo(obj.from, obj.command, { ok: true, removed }, obj.callback);
@@ -542,6 +554,7 @@ class TelegramMenu2 extends utils.Adapter {
         if (obj.command === 'importRegistry') {
             importRegistry(this, obj.message)
                 .then(keys => {
+                    this.rescanTriggers();
                     if (obj.callback) {
                         this.sendTo(obj.from, obj.command, { ok: true, imported: keys }, obj.callback);
                     }

@@ -2744,6 +2744,85 @@ async function run() {
         await fakeAdapter.setStateAsync('registry._index', { val: indexBefore || '[]', ack: true });
     }
 
+    // --- Review finding: never delete objects that carry custom settings of other adapters ---
+    {
+        const { migrateAsciiObjectIds } = require('../lib/migrate');
+        const { deleteMenus, resetRegistry, registryStateId, getMenu } = require('../lib/registry');
+        const { denyUser } = require('../lib/users');
+        const custom = { 'history.0': { enabled: true } };
+        const seed = async (id, val, extraCommon = {}) => {
+            await fakeAdapter.setObjectNotExistsAsync(id, {
+                type: 'state',
+                common: { name: id, ...extraCommon },
+                native: {},
+            });
+            await fakeAdapter.setStateAsync(id, { val, ack: true });
+        };
+        const indexBefore = (await fakeAdapter.getStateAsync('registry._index'))?.val;
+
+        // deleteMenus / resetRegistry: object with custom stays, menu is emptied
+        await seed(registryStateId('keepme'), '{"title":"K"}', { custom });
+        await seed(registryStateId('dropme'), '{"title":"D"}');
+        const removed = await deleteMenus(fakeAdapter, ['keepme', 'dropme']);
+        if (removed.length !== 2) {
+            throw new Error('deleteMenus() should report both menus as removed!');
+        }
+        if (!(await fakeAdapter.getObjectAsync(registryStateId('keepme')))) {
+            throw new Error('deleteMenus() deleted an object with custom settings!');
+        }
+        if (await getMenu(fakeAdapter, 'keepme')) {
+            throw new Error('deleteMenus() left the menu of a kept object active!');
+        }
+        if (await fakeAdapter.getObjectAsync(registryStateId('dropme'))) {
+            throw new Error('deleteMenus() did not delete a plain object!');
+        }
+        await fakeAdapter.setStateAsync('registry._index', { val: '["keepme"]', ack: true });
+        await resetRegistry(fakeAdapter);
+        if (!(await fakeAdapter.getObjectAsync(registryStateId('keepme')))) {
+            throw new Error('resetRegistry() deleted an object with custom settings!');
+        }
+
+        // denyUser: kept object is reset instead of deleted
+        await seed('users.denyc.role', 'user', { custom });
+        await seed('users.denyc.chatId', '1');
+        await seed('users.denyc.approved', true);
+        await denyUser(fakeAdapter, 'denyc');
+        if (!(await fakeAdapter.getObjectAsync('users.denyc.role'))) {
+            throw new Error('denyUser() deleted an object with custom settings!');
+        }
+        if ((await fakeAdapter.getStateAsync('users.denyc.role')).val !== '') {
+            throw new Error('denyUser() did not reset the kept role state!');
+        }
+        if (await fakeAdapter.getObjectAsync('users.denyc.chatId')) {
+            throw new Error('denyUser() did not delete a plain object!');
+        }
+
+        // migration: custom settings move to the new id, cache with custom is kept
+        await seed('users.u2.permissions.Küche', true, { custom });
+        await seed('runtime.lastRows.Küche', '[]', { custom });
+        await migrateAsciiObjectIds(fakeAdapter);
+        const moved = await fakeAdapter.getObjectAsync('users.u2.permissions.Kueche');
+        if (!moved || JSON.stringify(moved.common.custom) !== JSON.stringify(custom)) {
+            throw new Error('Migration did not carry common.custom over to the new id!');
+        }
+        if (!(await fakeAdapter.getObjectAsync('runtime.lastRows.Küche'))) {
+            throw new Error('Migration deleted a cache object with custom settings!');
+        }
+        console.log('--- Objects with custom settings are never deleted ---');
+
+        // clean up so the following checks stay unaffected
+        for (const id of [
+            registryStateId('keepme'),
+            'users.denyc.role',
+            'users.denyc.approved',
+            'users.u2.permissions.Kueche',
+            'runtime.lastRows.Küche',
+        ]) {
+            await fakeAdapter.delObjectAsync(id);
+        }
+        await fakeAdapter.setStateAsync('registry._index', { val: indexBefore || '[]', ack: true });
+    }
+
     console.log('\n✅ Smoke-Test durchgelaufen ohne Exception.');
 }
 

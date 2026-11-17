@@ -1,7 +1,7 @@
 {
     "common": {
         "name": "telegrammenu2",
-        "version": "0.2.5",
+        "version": "0.3.0",
         "messagebox": true,
         "titleLang": {
             "en": "Telegram Menu 2",
@@ -17,6 +17,19 @@
             "zh-cn": "Telegram Menu 2"
         },
         "news": {
+            "0.3.0": {
+                "en": "Editor rebuilt as a JSON tab with a custom component (GUI API 2), requires Admin 8",
+                "de": "Editor als JSON-Tab mit eigener Komponente neu aufgebaut (GUI API 2), benoetigt Admin 8",
+                "ru": "Редактор переписан как JSON-вкладка с собственным компонентом (GUI API 2), требуется Admin 8",
+                "pt": "Editor reconstruido como aba JSON com componente proprio (GUI API 2), requer Admin 8",
+                "nl": "Editor opnieuw opgebouwd als JSON-tabblad met eigen component (GUI API 2), vereist Admin 8",
+                "fr": "Editeur reconstruit comme onglet JSON avec composant propre (GUI API 2), necessite Admin 8",
+                "it": "Editor ricostruito come scheda JSON con componente proprio (GUI API 2), richiede Admin 8",
+                "es": "Editor reconstruido como pestana JSON con componente propio (GUI API 2), requiere Admin 8",
+                "pl": "Edytor przebudowany jako karta JSON z wlasnym komponentem (GUI API 2), wymaga Admin 8",
+                "uk": "Редактор перебудовано як JSON-вкладку з власним компонентом (GUI API 2), потрібен Admin 8",
+                "zh-cn": "编辑器重建为带自定义组件的 JSON 标签页 (GUI API 2)，需要 Admin 8"
+            },
             "0.2.5": {
                 "en": "Light/dark editor theme, info.connection, ASCII-only object ids with migration, translated texts, fixes.",
                 "de": "Heller/dunkler Editor, info.connection, ASCII-Objekt-IDs mit Migration, übersetzte Texte, Fehlerbehebungen.",
@@ -101,7 +114,7 @@
         ],
         "globalDependencies": [
             {
-                "admin": ">=7.6.20"
+                "admin": ">=8.0.0"
             }
         ],
         "adminUI": {
@@ -123,7 +136,7 @@
                 "zh-cn": "telegrammenu2 菜单编辑器"
             },
             "singleton": true,
-            "link": "adapter/telegrammenu2/tab.html"
+            "link": "jsonTab.json"
         }
     },
     "native": {
