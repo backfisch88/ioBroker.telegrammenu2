@@ -151,7 +151,11 @@ The editor source is in `src-admin`. `npm run build` builds it into `admin/custo
 
 ## Changelog
 
-### **WORK IN PROGRESS**
+### 0.3.1
+- Fixed: admin tab type is now `json`
+- Changed: Dependabot also checks `src-admin`
+
+### 0.3.0
 - New: object browser for datapoint fields and placeholders in the editor
 - Changed: editor is built from source (`src-admin`) as a JSON tab with a custom component, requires Admin 8
 - Changed: editor follows the Admin theme

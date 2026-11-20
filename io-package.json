@@ -1,7 +1,7 @@
 {
     "common": {
         "name": "telegrammenu2",
-        "version": "0.3.0",
+        "version": "0.3.1",
         "messagebox": true,
         "titleLang": {
             "en": "Telegram Menu 2",
@@ -17,6 +17,19 @@
             "zh-cn": "Telegram Menu 2"
         },
         "news": {
+            "0.3.1": {
+                "en": "Fixed admin tab type (json)",
+                "de": "Admin-Tab-Typ korrigiert (json)",
+                "ru": "Исправлен тип вкладки администратора (json)",
+                "pt": "Corrigido o tipo da aba de administração (json)",
+                "nl": "Type van het admin-tabblad gecorrigeerd (json)",
+                "fr": "Type d'onglet admin corrigé (json)",
+                "it": "Corretto il tipo di scheda admin (json)",
+                "es": "Corregido el tipo de pestaña de administración (json)",
+                "pl": "Poprawiono typ karty administratora (json)",
+                "uk": "Виправлено тип вкладки адміністратора (json)",
+                "zh-cn": "修正管理标签页类型 (json)"
+            },
             "0.3.0": {
                 "en": "Editor rebuilt as a JSON tab with a custom component (GUI API 2), requires Admin 8",
                 "de": "Editor als JSON-Tab mit eigener Komponente neu aufgebaut (GUI API 2), benoetigt Admin 8",
@@ -119,7 +132,7 @@
         ],
         "adminUI": {
             "config": "json",
-            "tab": "html"
+            "tab": "json"
         },
         "adminTab": {
             "name": {
