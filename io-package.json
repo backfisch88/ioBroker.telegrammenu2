@@ -1,7 +1,7 @@
 {
     "common": {
         "name": "telegrammenu2",
-        "version": "0.3.1",
+        "version": "0.3.2",
         "messagebox": true,
         "titleLang": {
             "en": "Telegram Menu 2",
@@ -17,6 +17,19 @@
             "zh-cn": "Telegram Menu 2"
         },
         "news": {
+            "0.3.2": {
+                "en": "Removed instance field from the editor, updated icon library",
+                "de": "Instanzfeld im Editor entfernt, Icon-Bibliothek aktualisiert",
+                "ru": "Удалено поле экземпляра в редакторе, обновлена библиотека иконок",
+                "pt": "Campo de instância removido do editor, biblioteca de ícones atualizada",
+                "nl": "Instantieveld uit de editor verwijderd, iconenbibliotheek bijgewerkt",
+                "fr": "Champ d'instance supprimé de l'éditeur, bibliothèque d'icônes mise à jour",
+                "it": "Campo istanza rimosso dall'editor, libreria icone aggiornata",
+                "es": "Campo de instancia eliminado del editor, biblioteca de iconos actualizada",
+                "pl": "Usunięto pole instancji z edytora, zaktualizowano bibliotekę ikon",
+                "uk": "Видалено поле екземпляра в редакторі, оновлено бібліотеку іконок",
+                "zh-cn": "移除编辑器中的实例字段，更新图标库"
+            },
             "0.3.1": {
                 "en": "Fixed admin tab type (json)",
                 "de": "Admin-Tab-Typ korrigiert (json)",

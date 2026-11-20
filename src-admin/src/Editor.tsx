@@ -9,7 +9,7 @@ import {
     useNodesState,
 } from '@xyflow/react';
 import { CircleCheck, CloudUpload, Download, Plus, Trash2, TriangleAlert, X } from 'lucide-react';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import type { AdminConnection, IobTheme } from '@iobroker/gui-components';
 
@@ -28,7 +28,7 @@ interface Status {
     text: string;
 }
 
-const DEFAULT_INSTANCE = 'telegrammenu2.0';
+const INSTANCE = 'telegrammenu2.0';
 const EDGE_STYLE = { stroke: 'var(--edge)', strokeWidth: 1.5 };
 
 const isMenu = (node: EditorNode): boolean => node.type === 'menu' || node.type === 'auto';
@@ -74,14 +74,11 @@ export default function Editor(props: {
     const [selectedEdgeId, setSelectedEdgeId] = useState<string | null>(null);
     const [panelOpen, setPanelOpen] = useState(false);
     const [exportOpen, setExportOpen] = useState(false);
-    const [instance, setInstance] = useState(DEFAULT_INSTANCE);
     const [status, setStatus] = useState<Status | null>(null);
     const [loadedFromAdapter, setLoadedFromAdapter] = useState(false);
     const [savedKeys, setSavedKeys] = useState<string[] | null>(null);
 
-    const instanceRef = useRef(instance);
-    instanceRef.current = instance;
-    const api = useMemo(() => new MenuApi(props.socket, () => instanceRef.current), [props.socket]);
+    const api = useMemo(() => new MenuApi(props.socket, () => INSTANCE), [props.socket]);
 
     const selectedNode = nodes.find(node => node.id === selectedId);
     const coarsePointer = window.matchMedia('(pointer: coarse)').matches;
@@ -347,12 +344,6 @@ export default function Editor(props: {
                         ))}
                     </div>
                     <div style={{ flex: 1 }} />
-                    <input
-                        value={instance}
-                        onChange={event => setInstance(event.target.value)}
-                        className="instance-input"
-                        title="ioBroker-Instanz"
-                    />
                     <button
                         className="save-btn"
                         onClick={() => void save()}
