@@ -26,6 +26,6 @@
         "vite": "8.3.8",
         "vite-plugin-commonjs": "^0.10.4",
         "@xyflow/react": "^12.8.0",
-        "lucide-react": "^1.72.0"
+        "lucide-react": "^1.76.0"
     }
 }
