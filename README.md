@@ -56,6 +56,8 @@ Every Telegram user who messages the bot is auto-registered on first contact wit
 { text: '🔥 Heating', cmd: 'TG:NAV:HEATING', nextMenu: 'heating_main', perm: 'heating' }
 ```
 
+**First admin:** nobody can approve the very first user, so the first admin has to be set once by hand. Send any message to the bot, then in ioBroker Objects set `telegrammenu2.0.users.<key>.role` to `admin`. Admins count as approved automatically. After that, new users are approved via the inline button in the admin chat.
+
 Permission and area names may contain any characters (e.g. umlauts); the object ids use an ASCII version (`Wäsche` → `users.<key>.permissions.Waesche`).
 
 A user only sees/can use this if `users.<theirKey>.permissions.heating` is `true`. The special value `perm: 'admin'` instead checks the user's `role` field directly (`users.<key>.role === 'admin'`) rather than a named permission. Admins get a built-in "👤 Users" auto-menu (`source: 'users'`) to toggle any user's individual permissions and role without touching states by hand.
